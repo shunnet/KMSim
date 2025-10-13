@@ -6,6 +6,24 @@ namespace Snet.Windows.KMSim.core
     public static class Win32
     {
         /// <summary>
+        /// POINT 结构体，用于存储鼠标坐标
+        /// 对应 Win32 API 中的 POINT 结构
+        /// </summary>
+        [StructLayout(LayoutKind.Sequential)]
+        public struct POINT
+        {
+            /// <summary>
+            /// 鼠标在屏幕上的 X 坐标（以主显示器左上角为原点 0,0）
+            /// </summary>
+            public int X;
+
+            /// <summary>
+            /// 鼠标在屏幕上的 Y 坐标（以主显示器左上角为原点 0,0）
+            /// </summary>
+            public int Y;
+        }
+
+        /// <summary>
         /// 窗口客户区矩形
         /// </summary>
         public struct RECT
@@ -222,14 +240,20 @@ namespace Snet.Windows.KMSim.core
         public static extern void keybd_event(byte bVk, byte bScan, uint dwFlags, uint dwExtraInfo);
 
         /// <summary>
-        /// 获取窗口标题文本
+        /// 调用 Windows 用户32库（user32.dll）中的 GetCursorPos 函数
+        /// 用于获取鼠标在整个屏幕（桌面）的绝对坐标
         /// </summary>
-        /// <param name="hwnd">窗口句柄</param>
-        /// <param name="lpString">存放标题的缓冲区</param>
-        /// <param name="nMaxCount">缓冲区最大字符数</param>
-        /// <returns>返回拷贝到缓冲区的字符数量</returns>
-        [DllImport("user32.dll")]
-        public static extern int GetWindowText(IntPtr hwnd, StringBuilder lpString, int nMaxCount);
+        /// <param name="lpPoint">
+        /// 输出参数，返回鼠标的坐标点
+        /// 通过 POINT 结构体表示 X 和 Y 坐标
+        /// </param>
+        /// <returns>
+        /// 返回 bool 类型：
+        /// true  表示成功获取鼠标位置
+        /// false 表示获取失败
+        /// </returns>
+        [DllImport("user32.dll", SetLastError = true)]
+        public static extern bool GetCursorPos(out POINT lpPoint);
 
         /// <summary>
         /// 根据屏幕坐标获取窗口句柄
@@ -284,5 +308,65 @@ namespace Snet.Windows.KMSim.core
         [DllImport("user32.dll")]
         public static extern short GetKeyState(int nVirtKey);
 
+        /// <summary>
+        /// 枚举当前系统中所有顶级窗口（不包括子窗口），并为每个窗口调用回调函数。
+        /// </summary>
+        /// <param name="lpEnumFunc">
+        /// 回调函数（delegate），在每个窗口句柄上被调用。
+        /// 如果回调返回 true，则继续枚举下一个窗口；
+        /// 如果返回 false，则停止枚举。
+        /// </param>
+        /// <param name="lParam">
+        /// 用户自定义参数，可用于向回调函数传递上下文信息，一般填 <see cref="IntPtr.Zero"/>。
+        /// </param>
+        /// <returns>
+        /// 若成功枚举所有窗口或中途被终止返回 true；
+        /// 若发生错误返回 false（可使用 GetLastError() 获取错误代码）。
+        /// </returns>
+        [DllImport("user32.dll")]
+        public static extern bool EnumWindows(EnumWindowsProc lpEnumFunc, IntPtr lParam);
+
+        /// <summary>
+        /// 枚举窗口回调函数委托定义。
+        /// </summary>
+        /// <param name="hWnd">当前枚举到的窗口句柄。</param>
+        /// <param name="lParam">传递给 <see cref="EnumWindows"/> 的用户参数。</param>
+        /// <returns>
+        /// 返回 true 继续枚举下一个窗口；
+        /// 返回 false 停止枚举。
+        /// </returns>
+        public delegate bool EnumWindowsProc(IntPtr hWnd, IntPtr lParam);
+
+        /// <summary>
+        /// 获取指定窗口的标题文本（窗口名称）。
+        /// </summary>
+        /// <param name="hWnd">目标窗口句柄。</param>
+        /// <param name="lpString">用于接收窗口标题文本的缓冲区（StringBuilder 对象）。</param>
+        /// <param name="nMaxCount">缓冲区最大长度（单位：字符）。</param>
+        /// <returns>
+        /// 返回复制到缓冲区的字符数（不包括终止符）。
+        /// 若窗口无标题或发生错误则返回 0。
+        /// </returns>
+        /// <remarks>
+        /// 注意：此函数只能获取当前进程有访问权限的窗口标题；
+        /// 若窗口属于其他高完整性级别的进程（如管理员进程），
+        /// 可能会返回空字符串。
+        /// </remarks>
+        [DllImport("user32.dll", SetLastError = true, CharSet = CharSet.Auto)]
+        public static extern int GetWindowText(IntPtr hWnd, StringBuilder lpString, int nMaxCount);
+
+        /// <summary>
+        /// 判断指定句柄对应的窗口是否“可见”。
+        /// </summary>
+        /// <param name="hWnd">窗口句柄。</param>
+        /// <returns>
+        /// 如果窗口可见则返回 true；
+        /// 如果窗口被隐藏或无效则返回 false。
+        /// </returns>
+        /// <remarks>
+        /// 此函数仅判断可见状态，不判断窗口是否最小化或被其他窗口遮挡。
+        /// </remarks>
+        [DllImport("user32.dll")]
+        public static extern bool IsWindowVisible(IntPtr hWnd);
     }
 }

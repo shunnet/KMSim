@@ -1,5 +1,6 @@
 ﻿using Snet.Windows.KMSim.data;
 using Snet.Windows.KMSim.@enum;
+using System.Text;
 using System.Windows.Input;
 
 namespace Snet.Windows.KMSim.core
@@ -9,6 +10,137 @@ namespace Snet.Windows.KMSim.core
     /// </summary>
     public class KMSimCore
     {
+        /// <summary>
+        /// 异步拷贝内容到剪贴板
+        /// </summary>
+        /// <param name="content">内容</param>
+        /// <param name="token">取消任务的 Token</param>
+        /// <returns>任务对象</returns>
+        public async Task CopyContentAsync(string content, CancellationToken token = default)
+        {
+            if (content == null)
+                return;
+            await Task.Run(() =>
+            {
+                System.Windows.Clipboard.SetDataObject(content);
+            }, token);
+        }
+
+        /// <summary>
+        /// 异步延迟执行任务（支持取消操作）
+        /// </summary>
+        /// <param name="ms">
+        /// 延迟的时间，单位为毫秒（milliseconds）。<br/>
+        /// 例如：传入 <c>1000</c> 表示延迟 1 秒再继续执行后续代码。
+        /// </param>
+        /// <param name="token">
+        /// 用于取消当前延迟的 <see cref="CancellationToken"/>。<br/>
+        /// 当该 Token 被触发时，延迟任务会提前中断并抛出 <see cref="TaskCanceledException"/> 异常。<br/>
+        /// 可选参数，默认值为 <see cref="CancellationToken.None"/>（即不支持取消）。  
+        /// </param>
+        /// <returns>
+        /// 一个可等待的 <see cref="Task"/> 对象。<br/>
+        /// 调用方可使用 <c>await</c> 等待延迟完成，或通过 <paramref name="token"/> 提前取消等待。  
+        /// </returns>
+        /// <remarks>
+        /// ✅ **功能说明：**  
+        /// 本方法是对 <see cref="Task.Delay(int, CancellationToken)"/> 的轻量封装，  
+        /// 主要用于在异步流程中插入非阻塞延时逻辑。  
+        ///  
+        /// ⚙️ **特点：**
+        /// <list type="bullet">
+        /// <item>不会阻塞当前线程（区别于 <c>Thread.Sleep</c>）。</item>
+        /// <item>支持取消操作，适合在循环或任务调度中安全退出。</item>
+        /// <item>内部使用 <see cref="Task.Delay"/>，线程安全且高性能。</item>
+        /// </list>
+        /// 
+        /// ⚠️ **注意事项：**
+        /// <list type="bullet">
+        /// <item>若传入的 <paramref name="ms"/> 小于 0，将抛出 <see cref="ArgumentOutOfRangeException"/>。</item>
+        /// <item>若 <paramref name="token"/> 在延迟过程中被触发，任务会提前结束并抛出取消异常。</item>
+        /// <item>若在 UI 线程中调用，请使用 <c>await</c> 避免界面卡顿。</item>
+        /// </list>
+        /// </remarks>
+        public async Task DelayAsync(int ms, CancellationToken token = default)
+            => await Task.Delay(ms, token);
+
+
+        /// <summary>
+        /// 异步模糊查找窗口句柄（根据窗口标题匹配）
+        /// </summary>
+        /// <param name="name">
+        /// 窗口标题关键字（支持模糊匹配，不区分大小写）
+        /// </param>
+        /// <param name="token">
+        /// 用于取消任务的 <see cref="CancellationToken"/>，
+        /// 在长时间查找时可提前终止任务。
+        /// </param>
+        /// <returns>
+        /// 若找到匹配窗口则返回窗口句柄（<see cref="nint"/> 类型）；
+        /// 未找到则返回 0（即 <see cref="IntPtr.Zero"/>）。
+        /// </returns>
+        /// <remarks>
+        /// 本方法通过调用 Win32 API <see cref="Win32.EnumWindows"/> 枚举系统中所有顶级窗口，
+        /// 并使用 <see cref="Win32.GetWindowText"/> 获取窗口标题进行模糊匹配。<br/>
+        /// 当匹配到第一个符合条件的窗口后即立即停止枚举，以提升性能。<br/><br/>
+        /// 注意：
+        /// <list type="bullet">
+        /// <item>仅能枚举当前会话下的可见顶级窗口。</item>
+        /// <item>若目标窗口标题为空或属于更高完整性级别进程（如管理员窗口），可能无法获取。</item>
+        /// <item>搜索过程中可通过 <paramref name="token"/> 取消以节约资源。</item>
+        /// </list>
+        /// </remarks>
+        public async Task<nint> GetWindowsHandleAsync(string name, CancellationToken token = default)
+        {
+            // 参数检查：防止传入空字符串造成无效枚举
+            if (string.IsNullOrWhiteSpace(name))
+                return 0;
+
+            return await Task.Run(() =>
+            {
+                nint found = 0; // 匹配到的句柄
+                bool stop = false; // 控制是否提前结束枚举
+
+                // 枚举系统所有顶级窗口
+                Win32.EnumWindows((hWnd, lParam) =>
+                {
+                    // 若任务被取消，则立即停止枚举
+                    if (token.IsCancellationRequested)
+                    {
+                        stop = true;
+                        return false;
+                    }
+
+                    // 跳过不可见窗口
+                    if (!Win32.IsWindowVisible(hWnd))
+                        return true;
+
+                    // 优化性能：使用 StringBuilder 复用（分配开销较小）
+                    Span<char> buffer = stackalloc char[256];
+                    StringBuilder sb = new(256);
+                    Win32.GetWindowText(hWnd, sb, sb.Capacity);
+
+                    string title = sb.ToString();
+                    if (string.IsNullOrEmpty(title))
+                        return true;
+
+                    // 模糊匹配窗口标题（忽略大小写）
+                    if (title.Contains(name, StringComparison.OrdinalIgnoreCase))
+                    {
+                        found = hWnd;
+                        return false; // 停止枚举
+                    }
+
+                    return true; // 继续下一个窗口
+                }, IntPtr.Zero);
+
+                // 如果任务中途被取消则直接抛出异常（符合 Task 模式）
+                token.ThrowIfCancellationRequested();
+
+                return found;
+            }, token);
+        }
+
 
         /// <summary>
         /// 异步设置窗口位置/大小/显示状态（支持置顶/非置顶/隐藏等操作）
@@ -38,28 +170,26 @@ namespace Snet.Windows.KMSim.core
         /// <returns>任务对象</returns>
         public async Task WindowsSetPosAsync(IntPtr hWnd, int hWndInsertAfter = -1, int x = 0, int y = 0, int cx = 0, int cy = 0, uint uFlags = 0x0001 | 0x0002, CancellationToken token = default)
             => await Task.Run(() => Win32.SetWindowPos(hWnd, hWndInsertAfter, x, y, cx, cy, uFlags), token);
+
         /// <summary>
         /// 移动窗口
         /// </summary>
-        /// <param name="hWnd">举报</param>
+        /// <param name="hWnd">句柄</param>
         /// <param name="x">x坐标</param>
         /// <param name="y">y坐标</param>
         /// <param name="width">宽</param>
         /// <param name="height">高</param>
         /// <param name="token">取消通知</param>
         public async Task MoveWindowsAsync(IntPtr hWnd, int x, int y, int width, int height, CancellationToken token = default)
-        {
-            await Task.Run(() => Win32.MoveWindow(hWnd, x, y, width, height, true));
-        }
+            => await Task.Run(() => Win32.MoveWindow(hWnd, x, y, width, height, true));
 
         #region 鼠标操作
+
         /// <summary>
         /// 移动鼠标
         /// </summary>
         public async Task MouseMoveAsync(int x, int y, CancellationToken token = default)
-        {
-            await Task.Run(() => Win32.SetCursorPos(x, y), token);
-        }
+            => await Task.Run(() => Win32.SetCursorPos(x, y), token);
 
         /// <summary>
         /// 鼠标左键点击（按下 + 延迟 + 松开）
@@ -2759,7 +2889,7 @@ namespace Snet.Windows.KMSim.core
         /// <summary>
         /// 异步模拟按下并释放功能键
         /// </summary>
-        /// <param name="data">功能键字符串，例如 "F1"</param>
+        /// <param name="key">功能键字符串，例如 "F1"</param>
         /// <param name="token">取消令牌（可选）</param>
         public async Task KeyboardPressAsync(Key key, CancellationToken token = default)
         {
@@ -2771,7 +2901,7 @@ namespace Snet.Windows.KMSim.core
         /// <summary>
         /// 异步模拟按下并释放功能键
         /// </summary>
-        /// <param name="data">功能键字符串，例如 "F1"</param>
+        /// <param name="key">功能键字符串，例如 "F1"</param>
         /// <param name="token">取消令牌（可选）</param>
         public async Task KeyboardPressAsync(byte key, CancellationToken token = default)
         {
