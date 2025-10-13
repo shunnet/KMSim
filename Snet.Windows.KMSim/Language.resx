@@ -148,4 +148,7 @@
   <data name="SystemTitle" xml:space="preserve">
     <value>[ Shunnet.top ] Windows 键鼠模拟工具</value>
   </data>
+  <data name="监控" xml:space="preserve">
+    <value>监控</value>
+  </data>
 </root>

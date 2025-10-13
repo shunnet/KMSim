@@ -14,8 +14,11 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<PackageReference Include="Snet.Windows.Controls" Version="25.284.1" />
+		<PackageReference Include="LibreHardwareMonitorLib" Version="0.9.4" />
+		<PackageReference Include="ScottPlot.WPF" Version="5.1.57" />
+		<PackageReference Include="Snet.Windows.Controls" Version="25.286.1" />
 	</ItemGroup>
+
 	<ItemGroup>
 		<Resource Include="Icon.ico" />
 	</ItemGroup>

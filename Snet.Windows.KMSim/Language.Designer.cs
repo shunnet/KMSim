@@ -187,6 +187,15 @@ namespace Snet.Windows.KMSim {
         }
         
         /// <summary>
+        ///   查找类似 监控 的本地化字符串。
+        /// </summary>
+        internal static string 监控 {
+            get {
+                return ResourceManager.GetString("监控", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   查找类似 退出 的本地化字符串。
         /// </summary>
         internal static string 退出 {

@@ -1,10 +1,15 @@
 ﻿using CommunityToolkit.Mvvm.Input;
+using ScottPlot.WPF;
 using Snet.Core.handler;
 using Snet.Utility;
 using Snet.Windows.Controls.handler;
+using Snet.Windows.Controls.message;
 using Snet.Windows.Core.mvvm;
+using Snet.Windows.KMSim.chart;
 using Snet.Windows.KMSim.core;
+using Snet.Windows.KMSim.utility;
 using System.Windows.Controls;
+using static Snet.Windows.KMSim.utility.SystemMonitoring;
 
 namespace Snet.Windows.KMSim
 {
@@ -15,6 +20,24 @@ namespace Snet.Windows.KMSim
             uiMessage.OnInfoEventAsync += async (object? sender, Model.data.EventInfoResult e) => Info = e.Message;
             uiMessage.StartAsync().ConfigureAwait(false);
             GetXYAsync().ConfigureAwait(false);
+
+
+            chartOperate = ChartOperate.Instance(new()
+            {
+                ChartControl = ChartControl,
+                LineAdjust = true,
+                HideGrid = true
+            });
+            chartOperate.On();
+            chartOperate.Create(new() { SN = "CPU", Title = "CPU", TitleEN = "CPU" });
+            chartOperate.Create(new() { SN = "GPU", Title = "GPU", TitleEN = "GPU" });
+            chartOperate.Create(new() { SN = "NET", Title = "NET", TitleEN = "NET" });
+            chartOperate.Create(new() { SN = "RAM", Title = "RAM", TitleEN = "RAM" });
+
+
+            systemMonitoring = SystemMonitoring.Instance();
+
+            _ = UpdateSystemMonitoringValueAsync();
         }
 
         #region 对象
@@ -22,9 +45,43 @@ namespace Snet.Windows.KMSim
         /// ui信息处理器
         /// </summary>
         private UiMessageHandler uiMessage = UiMessageHandler.Instance("Info");
+
+        /// <summary>
+        /// 图表操作
+        /// </summary>
+        private ChartOperate chartOperate;
+
+        /// <summary>
+        /// 系统信息监控
+        /// </summary>
+        private SystemMonitoring systemMonitoring;
+
         #endregion 对象
 
         #region 属性
+        /// <summary>
+        /// 系统名称
+        /// </summary>
+        public string SystemName { get; set; }
+        /// <summary>
+        /// 系统版本
+        /// </summary>
+        public string SystemVer { get; set; }
+        /// <summary>
+        /// 系统运行时间
+        /// </summary>
+        public string SystemRunTime { get; set; }
+
+        /// <summary>
+        /// 控件
+        /// </summary>
+        public WpfPlot ChartControl
+        {
+            get => chartControl;
+            set => SetProperty(ref chartControl, value);
+        }
+        private WpfPlot chartControl = new WpfPlot();
+
         /// <summary>
         /// 系统标题
         /// </summary>
@@ -110,6 +167,106 @@ namespace Snet.Windows.KMSim
         #endregion 命令
 
         #region 方法
+
+        /// <summary>
+        /// 更新线条数据
+        /// </summary>
+        private void UpdateLineSeriesData(string name, double value)
+        {
+            chartOperate.Update(name, value);
+        }
+
+        /// <summary>
+        /// 更新系统检测值
+        /// </summary>
+        private async Task UpdateSystemMonitoringValueAsync(CancellationToken token = default)
+        {
+            try
+            {
+                while (!token.IsCancellationRequested)
+                {
+                    HardwareData hardwareData = systemMonitoring.GetInfo();
+
+                    await Task.Run(() =>
+                    {
+                        System.Windows.Application.Current?.Dispatcher.Invoke(new Action(() =>
+                        {
+
+                            SystemName = hardwareData.SystemName;
+                            SystemVer = hardwareData.SystemVer;
+                            SystemRunTime = hardwareData.SystemRunTime;
+
+                            foreach (var iteminfolist in hardwareData.Info)
+                            {
+                                if (iteminfolist.Key.Equals("内存"))
+                                {
+                                    foreach (var item in iteminfolist.Vlaues)
+                                    {
+                                        if (item.Key.Equals("负载,Memory"))
+                                        {
+                                            UpdateLineSeriesData("RAM", double.Parse(item.Vlaue));
+                                        }
+                                    }
+                                }
+                                if (iteminfolist.Key.Equals("英伟达显卡") || iteminfolist.Key.Equals("因特尔显卡") || iteminfolist.Key.Equals("AMD显卡"))
+                                {
+                                    foreach (var item in iteminfolist.Vlaues)
+                                    {
+                                        if (item.Key.Equals("负载,GPU Core"))
+                                        {
+                                            UpdateLineSeriesData("GPU", double.Parse(item.Vlaue));
+                                        }
+                                        if (item.Key.Equals("温度,GPU Core"))
+                                        {
+                                            UpdateLineSeriesData("GpuT", double.Parse(item.Vlaue));
+                                        }
+                                    }
+                                }
+                                if (iteminfolist.Key.Equals("处理器"))
+                                {
+                                    foreach (var item in iteminfolist.Vlaues)
+                                    {
+                                        if (item.Key.Equals("负载,CPU Total"))
+                                        {
+                                            UpdateLineSeriesData("CPU", double.Parse(item.Vlaue));
+                                        }
+                                        if (item.Key.Equals("温度,Core Max"))
+                                        {
+                                            UpdateLineSeriesData("CpuT", double.Parse(item.Vlaue));
+                                        }
+                                    }
+                                }
+
+                                if (iteminfolist.Key.Equals("网络"))
+                                {
+                                    foreach (var item in iteminfolist.Vlaues)
+                                    {
+                                        if (item.Key.Equals("负载,Network Utilization"))
+                                        {
+                                            if (double.Parse(item.Vlaue) > 0)
+                                            {
+                                                UpdateLineSeriesData("NET", double.Parse(item.Vlaue));
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+
+                        }));
+                    }, token).ConfigureAwait(false);
+
+                    await Task.Delay(100, token);
+                }
+            }
+            catch (TaskCanceledException) { }
+            catch (OperationCanceledException) { }
+            catch (Exception ex)
+            {
+                await MessageBox.Show($"error : {ex.Message}", "tips", Controls.@enum.MessageBoxButton.OK, Controls.@enum.MessageBoxImage.Exclamation);
+            }
+        }
+
+
         /// <summary>
         /// 获取鼠标的YX坐标
         /// </summary>
@@ -130,10 +287,14 @@ namespace Snet.Windows.KMSim
                         }
                         await Task.Delay(30, token);
                     }
-                }, token);
+                }, token).ConfigureAwait(false);
             }
             catch (TaskCanceledException) { }
             catch (OperationCanceledException) { }
+            catch (Exception ex)
+            {
+                await MessageBox.Show($"error : {ex.Message}", "tips", Controls.@enum.MessageBoxButton.OK, Controls.@enum.MessageBoxImage.Exclamation);
+            }
         }
         /// <summary>
         /// 信息框事件
@@ -245,18 +406,6 @@ namespace Snet.Windows.KMSim
         }
 
         #endregion 方法
-
-
-
-
-
-
-
-
-
-
-
-
 
     }
 }
