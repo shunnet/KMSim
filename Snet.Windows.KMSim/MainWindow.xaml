@@ -20,11 +20,42 @@
     LoadAnimationEnabled="true"
     WindowStartupLocation="CenterScreen"
     mc:Ignorable="d">
+    <Window.InputBindings>
+        <KeyBinding
+            Key="S"
+            Command="{Binding Save}"
+            Modifiers="Control" />
+        <KeyBinding
+            Key="O"
+            Command="{Binding Open}"
+            Modifiers="Control" />
+        <KeyBinding
+            Key="N"
+            Command="{Binding New}"
+            Modifiers="Control" />
+
+        <KeyBinding
+            Key="F1"
+            Command="{Binding Command}"
+            Modifiers="Alt" />
+        <KeyBinding
+            Key="F2"
+            Command="{Binding LeaveWord}"
+            Modifiers="Alt" />
+        <KeyBinding
+            Key="F3"
+            Command="{Binding About}"
+            Modifiers="Alt" />
+        <KeyBinding
+            Key="F4"
+            Command="{Binding Exit}"
+            Modifiers="Alt" />
+    </Window.InputBindings>
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
-            <RowDefinition Height="200" />
+            <RowDefinition Height="226" />
         </Grid.RowDefinitions>
         <Menu FontSize="14">
             <uis:MenuItem Header="{snet:Loc 文件}" Icon="{uis:SymbolIcon Document20, Filled=True}">
@@ -59,6 +90,7 @@
                 Header="{x:Null}"
                 Icon="{uis:SymbolIcon Symbol=Play20,
                                       Filled=True}"
+                InputGestureText="F1"
                 ToolTip="{snet:Loc 开始}" />
             <uis:MenuItem
                 Command="{Binding Stop}"
@@ -66,6 +98,7 @@
                 Header="{x:Null}"
                 Icon="{uis:SymbolIcon Symbol=Stop20,
                                       Filled=True}"
+                InputGestureText="F2"
                 ToolTip="{snet:Loc 停止}" />
             <uis:MenuItem
                 Command="{Binding Retry}"
@@ -73,28 +106,34 @@
                 Header="{x:Null}"
                 Icon="{uis:SymbolIcon Symbol=ArrowClockwise20,
                                       Filled=True}"
+                InputGestureText="F3"
                 ToolTip="{snet:Loc 重试}" />
             <uis:MenuItem Header="{snet:Loc 帮助}" Icon="{uis:SymbolIcon Symbol=ChatHelp20, Filled=True}">
                 <uis:MenuItem
                     Command="{Binding Command}"
                     Header="{snet:Loc 命令}"
                     Icon="{uis:SymbolIcon Symbol=Comma20,
-                                          Filled=True}" />
+                                          Filled=True}"
+                    InputGestureText="ALT+F1" />
                 <uis:MenuItem
                     Command="{Binding LeaveWord}"
                     Header="{snet:Loc 留言}"
                     Icon="{uis:SymbolIcon Symbol=SlideTextMultiple20,
-                                          Filled=True}" />
+                                          Filled=True}"
+                    InputGestureText="ALT+F2" />
                 <uis:MenuItem
                     Command="{Binding About}"
                     Header="{snet:Loc 关于}"
                     Icon="{uis:SymbolIcon Symbol=Bookmark20,
-                                          Filled=True}" />
+                                          Filled=True}"
+                    InputGestureText="ALT+F3" />
+                <Separator />
                 <uis:MenuItem
                     Command="{Binding Exit}"
                     Header="{snet:Loc 退出}"
                     Icon="{uis:SymbolIcon Symbol=ArrowExportLtr20,
-                                          Filled=True}" />
+                                          Filled=True}"
+                    InputGestureText="ALT+F4" />
             </uis:MenuItem>
         </Menu>
 

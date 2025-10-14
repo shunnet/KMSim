@@ -151,4 +151,7 @@
   <data name="监控" xml:space="preserve">
     <value>监控</value>
   </data>
+  <data name="命令查找窗口" xml:space="preserve">
+    <value>[ Shunnet.top ] Windows 键鼠模拟工具 - 命令查找窗口</value>
+  </data>
 </root>

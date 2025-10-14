@@ -3,44 +3,63 @@ using ScottPlot.WPF;
 using Snet.Core.handler;
 using Snet.Utility;
 using Snet.Windows.Controls.handler;
-using Snet.Windows.Controls.message;
 using Snet.Windows.Core.mvvm;
 using Snet.Windows.KMSim.chart;
 using Snet.Windows.KMSim.core;
 using Snet.Windows.KMSim.utility;
+using System.Diagnostics;
+using System.IO;
 using System.Windows.Controls;
+using System.Windows.Input;
 using static Snet.Windows.KMSim.utility.SystemMonitoring;
+using MessageBox = Snet.Windows.Controls.message.MessageBox;
 
 namespace Snet.Windows.KMSim
 {
     public class MainWindowViewModel : BindNotify
     {
-        public MainWindowViewModel()
+        public MainWindowViewModel(GlobalKeyboardHook hook)
         {
+            // 界面消息处理
             uiMessage.OnInfoEventAsync += async (object? sender, Model.data.EventInfoResult e) => Info = e.Message;
-            uiMessage.StartAsync().ConfigureAwait(false);
-            GetXYAsync().ConfigureAwait(false);
+            _ = uiMessage.StartAsync().ConfigureAwait(false);
 
+            // 获取鼠标坐标
+            _ = GetXYAsync(globalToken.Token).ConfigureAwait(false);
 
+            // 图表操作
             chartOperate = ChartOperate.Instance(new()
             {
                 ChartControl = ChartControl,
                 LineAdjust = true,
-                HideGrid = true
+                HideGrid = true,
+                YCrosshairText = true,
+                RefreshTime = 10
             });
             chartOperate.On();
-            chartOperate.Create(new() { SN = "CPU", Title = "CPU", TitleEN = "CPU" });
-            chartOperate.Create(new() { SN = "GPU", Title = "GPU", TitleEN = "GPU" });
-            chartOperate.Create(new() { SN = "NET", Title = "NET", TitleEN = "NET" });
-            chartOperate.Create(new() { SN = "RAM", Title = "RAM", TitleEN = "RAM" });
+            chartOperate.Create(new() { SN = "Cpu", Title = "处理器", TitleEN = "Cpu" });
+            chartOperate.Create(new() { SN = "CpuTemp", Title = "处理器温度", TitleEN = "CpuTemp" });
+            chartOperate.Create(new() { SN = "Gpu", Title = "显卡", TitleEN = "Gpu" });
+            chartOperate.Create(new() { SN = "GpuTemp", Title = "显卡温度", TitleEN = "GpuTemp" });
+            chartOperate.Create(new() { SN = "NET", Title = "网络", TitleEN = "NET" });
+            chartOperate.Create(new() { SN = "RAM", Title = "内存", TitleEN = "RAM" });
 
-
+            // 系统监控
             systemMonitoring = SystemMonitoring.Instance();
 
-            _ = UpdateSystemMonitoringValueAsync();
+            // 更新系统检测值
+            _ = UpdateSystemMonitoringValueAsync(globalToken.Token);
+
+            //设置键盘监听
+            globalKeyboardHook = hook;
+            globalKeyboardHook.SetHook();
+            globalKeyboardHook.KeyEvent += KeyEvent;
+
         }
 
         #region 对象
+        private GlobalKeyboardHook globalKeyboardHook;
+
         /// <summary>
         /// ui信息处理器
         /// </summary>
@@ -56,9 +75,30 @@ namespace Snet.Windows.KMSim
         /// </summary>
         private SystemMonitoring systemMonitoring;
 
+        /// <summary>
+        /// 全局的任务取消控制
+        /// </summary>
+        private CancellationTokenSource globalToken = new CancellationTokenSource();
+
+        /// <summary>
+        /// 命令窗口
+        /// </summary>
+        private CommandWindow commandWindow;
+
         #endregion 对象
 
         #region 属性
+
+        /// <summary>
+        /// 文件存储路径
+        /// </summary>
+        private string FilePath;
+
+        /// <summary>
+        /// 文件保存的路径
+        /// </summary>
+        private bool SavePath;
+
         /// <summary>
         /// 系统名称
         /// </summary>
@@ -168,6 +208,27 @@ namespace Snet.Windows.KMSim
 
         #region 方法
 
+        #region 其余操作
+        /// <summary>
+        /// 按键
+        /// </summary>
+        /// <param name="key">键码</param>
+        public void KeyEvent(Key key)
+        {
+            if (key == Key.F1)
+            {
+                _ = StartAsync().ConfigureAwait(false);
+            }
+            if (key == Key.F2)
+            {
+                _ = StopAsync().ConfigureAwait(false);
+            }
+            if (key == Key.F3)
+            {
+                _ = RetryAsync().ConfigureAwait(false);
+            }
+        }
+
         /// <summary>
         /// 更新线条数据
         /// </summary>
@@ -214,11 +275,11 @@ namespace Snet.Windows.KMSim
                                     {
                                         if (item.Key.Equals("负载,GPU Core"))
                                         {
-                                            UpdateLineSeriesData("GPU", double.Parse(item.Vlaue));
+                                            UpdateLineSeriesData("Gpu", double.Parse(item.Vlaue));
                                         }
                                         if (item.Key.Equals("温度,GPU Core"))
                                         {
-                                            UpdateLineSeriesData("GpuT", double.Parse(item.Vlaue));
+                                            UpdateLineSeriesData("GpuTemp", double.Parse(item.Vlaue));
                                         }
                                     }
                                 }
@@ -228,11 +289,11 @@ namespace Snet.Windows.KMSim
                                     {
                                         if (item.Key.Equals("负载,CPU Total"))
                                         {
-                                            UpdateLineSeriesData("CPU", double.Parse(item.Vlaue));
+                                            UpdateLineSeriesData("Cpu", double.Parse(item.Vlaue));
                                         }
                                         if (item.Key.Equals("温度,Core Max"))
                                         {
-                                            UpdateLineSeriesData("CpuT", double.Parse(item.Vlaue));
+                                            UpdateLineSeriesData("CpuTemp", double.Parse(item.Vlaue));
                                         }
                                     }
                                 }
@@ -255,7 +316,7 @@ namespace Snet.Windows.KMSim
                         }));
                     }, token).ConfigureAwait(false);
 
-                    await Task.Delay(100, token);
+                    await Task.Delay(300, token);
                 }
             }
             catch (TaskCanceledException) { }
@@ -265,7 +326,6 @@ namespace Snet.Windows.KMSim
                 await MessageBox.Show($"error : {ex.Message}", "tips", Controls.@enum.MessageBoxButton.OK, Controls.@enum.MessageBoxImage.Exclamation);
             }
         }
-
 
         /// <summary>
         /// 获取鼠标的YX坐标
@@ -296,18 +356,20 @@ namespace Snet.Windows.KMSim
                 await MessageBox.Show($"error : {ex.Message}", "tips", Controls.@enum.MessageBoxButton.OK, Controls.@enum.MessageBoxImage.Exclamation);
             }
         }
+
         /// <summary>
         /// 信息框事件
         /// 让滚动条一直处在最下方
         /// </summary>
         public Task InfoTextChangedAsync(TextChangedEventArgs? e)
         {
-            TextBox textBox = e.Source.GetSource<TextBox>();
+            System.Windows.Controls.TextBox textBox = e.Source.GetSource<System.Windows.Controls.TextBox>();
             textBox.SelectionStart = textBox.Text.Length;
             textBox.SelectionLength = 0;
             textBox.ScrollToEnd();
             return Task.CompletedTask;
         }
+
         /// <summary>
         /// 清空消息
         /// </summary>
@@ -316,12 +378,77 @@ namespace Snet.Windows.KMSim
         {
             await uiMessage.ClearAsync();
         }
+        #endregion 其余操作
+
+        #region 帮助操作
+        /// <summary>
+        /// 关于
+        /// </summary>
+        /// <returns></returns>
+        private async Task AboutAsync()
+        {
+            Process.Start(new ProcessStartInfo
+            {
+                FileName = "https://blog.shunnet.top/",
+                UseShellExecute = true
+            });
+        }
+
+        /// <summary>
+        /// 留言
+        /// </summary>
+        /// <returns></returns>
+        private async Task LeaveWordAsync()
+        {
+            Process.Start(new ProcessStartInfo
+            {
+                FileName = "https://blog.shunnet.top/leaveword",
+                UseShellExecute = true
+            });
+        }
+
+        /// <summary>
+        /// 退出
+        /// </summary>
+        /// <returns></returns>
+        public async Task ExitAsync()
+        {
+            globalToken.Cancel();
+            commandWindow?.Close();
+            await uiMessage.StopAsync().ConfigureAwait(false);
+            globalKeyboardHook?.KeyEvent -= KeyEvent;
+            globalKeyboardHook?.Unhook();
+            System.Windows.Application.Current.Shutdown();
+        }
+
+        /// <summary>
+        /// 命令
+        /// </summary>
+        /// <returns></returns>
+        private async Task CommandAsync()
+        {
+            if (commandWindow == null)
+            {
+                commandWindow = new CommandWindow();
+                commandWindow.Show();
+                commandWindow.Closed += (s, e) =>
+                {
+                    commandWindow = null;
+                };
+            }
+            commandWindow.Topmost = true;
+            commandWindow.Topmost = false;
+        }
+        #endregion 帮助操作
+
+        #region 逻辑操作
         /// <summary>
         /// 开始
         /// </summary>
         /// <returns></returns>
         private async Task StartAsync()
         {
+            await MessageBox.Show($"StartAsync", "tips", Controls.@enum.MessageBoxButton.OK, Controls.@enum.MessageBoxImage.Information);
             await uiMessage.ShowAsync("StartAsync");
         }
         /// <summary>
@@ -340,45 +467,42 @@ namespace Snet.Windows.KMSim
         {
             await uiMessage.ShowAsync("RetryAsync");
         }
-        /// <summary>
-        /// 命令
-        /// </summary>
-        /// <returns></returns>
-        private async Task CommandAsync()
-        {
-            await uiMessage.ShowAsync("CommandAsync");
-        }
-        /// <summary>
-        /// 关于
-        /// </summary>
-        /// <returns></returns>
-        private async Task AboutAsync()
-        {
-            await uiMessage.ShowAsync("AboutAsync");
-        }
-        /// <summary>
-        /// 留言
-        /// </summary>
-        /// <returns></returns>
-        private async Task LeaveWordAsync()
-        {
-            await uiMessage.ShowAsync("LeaveWordAsync");
-        }
-        /// <summary>
-        /// 退出
-        /// </summary>
-        /// <returns></returns>
-        private async Task ExitAsync()
-        {
-            await uiMessage.ShowAsync("ExitAsync");
-        }
+        #endregion 逻辑操作
+
+        #region 文件操作
+
+
         /// <summary>
         /// 新建
         /// </summary>
         /// <returns></returns>
         private async Task NewAsync()
         {
-            await uiMessage.ShowAsync("NewAsync");
+            if (!EditText.IsNullOrWhiteSpace() && !FilePath.IsNullOrWhiteSpace())
+            {
+                FileHandler.StringToFile(FilePath, EditText);
+                await uiMessage.ShowAsync($"已保存至：{FilePath}");
+            }
+
+
+            if (!EditText.IsNullOrWhiteSpace() && FilePath.IsNullOrWhiteSpace())
+            {
+                if (await MessageBox.Show("检测到有输入，是否保存？", "提示", Controls.@enum.MessageBoxButton.YesNo, Controls.@enum.MessageBoxImage.Question))
+                {
+                    if (!await saveSelect("成功保存至"))
+                    {
+                        await MessageBox.Show("已取消操作", "提示", Controls.@enum.MessageBoxButton.OK, Controls.@enum.MessageBoxImage.Information);
+                        return;
+                    }
+                }
+            }
+
+            if (!await saveSelect("新建成功"))
+            {
+                await MessageBox.Show("已取消操作", "提示", Controls.@enum.MessageBoxButton.OK, Controls.@enum.MessageBoxImage.Information);
+            }
+
+            EditText = string.Empty;
         }
         /// <summary>
         /// 打开
@@ -386,7 +510,12 @@ namespace Snet.Windows.KMSim
         /// <returns></returns>
         private async Task OpenAsync()
         {
-            await uiMessage.ShowAsync("OpenAsync");
+            FilePath = Win32Handler.Select("请选择文件", false, new() { { $"(*.ini)", $" *.ini" } });
+            if (!FilePath.IsNullOrWhiteSpace())
+            {
+                EditText = FileHandler.FileToString(FilePath);
+                await MessageBox.Show("打开成功", "提示", Controls.@enum.MessageBoxButton.OK, Controls.@enum.MessageBoxImage.Information);
+            }
         }
         /// <summary>
         /// 保存
@@ -394,7 +523,25 @@ namespace Snet.Windows.KMSim
         /// <returns></returns>
         private async Task SaveAsync()
         {
-            await uiMessage.ShowAsync("SaveAsync");
+            if (EditText.IsNullOrWhiteSpace() && FilePath.IsNullOrWhiteSpace())
+            {
+                await MessageBox.Show("文件路径为空，请先新建", "提示", Controls.@enum.MessageBoxButton.OK, Controls.@enum.MessageBoxImage.Information);
+                return;
+            }
+
+            if (!EditText.IsNullOrWhiteSpace() && FilePath.IsNullOrWhiteSpace())
+            {
+                if (await MessageBox.Show("检测到有输入，是否需要保存到文件？", "提示", Controls.@enum.MessageBoxButton.YesNo, Controls.@enum.MessageBoxImage.Question))
+                {
+                    if (!await saveSelect("成功保存至"))
+                    {
+                        await MessageBox.Show("已取消操作", "提示", Controls.@enum.MessageBoxButton.OK, Controls.@enum.MessageBoxImage.Information);
+                    }
+                }
+                return;
+            }
+            FileHandler.StringToFile(FilePath, EditText);
+            await uiMessage.ShowAsync($"保存成功");
         }
         /// <summary>
         /// 关闭
@@ -402,8 +549,50 @@ namespace Snet.Windows.KMSim
         /// <returns></returns>
         private async Task CloseAsync()
         {
-            await uiMessage.ShowAsync("CloseAsync");
+            if (EditText.IsNullOrWhiteSpace() && FilePath.IsNullOrWhiteSpace())
+            {
+                return;
+            }
+
+            if (!EditText.IsNullOrWhiteSpace() && FilePath.IsNullOrWhiteSpace())
+            {
+                if (await MessageBox.Show("检测到有输入，是否需要保存到文件？", "提示", Controls.@enum.MessageBoxButton.YesNo, Controls.@enum.MessageBoxImage.Question))
+                {
+                    if (!await saveSelect("成功保存至"))
+                    {
+                        await MessageBox.Show("已取消操作", "提示", Controls.@enum.MessageBoxButton.OK, Controls.@enum.MessageBoxImage.Information);
+                    }
+                }
+            }
+
+            if (!EditText.IsNullOrWhiteSpace() && !FilePath.IsNullOrWhiteSpace())
+            {
+                FileHandler.StringToFile(FilePath, EditText);
+            }
+
+            EditText = string.Empty;
+            FilePath = string.Empty;
+            await uiMessage.ShowAsync($"关闭成功");
         }
+
+        /// <summary>
+        /// 私有保存
+        /// </summary>
+        /// <returns></returns>
+        private async Task<bool> saveSelect(string message)
+        {
+            string path = Win32Handler.Select("请选择文件夹", true);
+            if (!string.IsNullOrEmpty(path))
+            {
+                string fileName = $"{App.LanguageOperate.GetLanguageValue("逻辑")}[{DateTime.Now.ToString("yyyyMMddHHmmss")}].ini";
+                FilePath = Path.Combine(path, fileName);
+                FileHandler.StringToFile(FilePath, EditText);
+                await MessageBox.Show($"{message}：{fileName}", "提示", Controls.@enum.MessageBoxButton.OK, Controls.@enum.MessageBoxImage.Information);
+                return true;
+            }
+            return false;
+        }
+        #endregion 文件操作
 
         #endregion 方法
 

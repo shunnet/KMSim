@@ -14,6 +14,7 @@ using Snet.Windows.Core.@enum;
 using Snet.Windows.Core.handler;
 using System.Collections.Concurrent;
 using System.IO;
+using System.Windows;
 using System.Windows.Media.Imaging;
 using static Snet.Windows.KMSim.chart.ChartData;
 using Image = ScottPlot.Image;
@@ -131,6 +132,11 @@ namespace Snet.Windows.KMSim.chart
         private volatile bool AutoRefreshStatus = false;
 
         /// <summary>
+        /// 十字线
+        /// </summary>
+        private ScottPlot.Plottables.Crosshair CH;
+
+        /// <summary>
         /// 自动刷新循环<br/>
         /// 优化点：<br/>
         /// 1. 不再在内部额外使用 Task.Run 去包装 UI 相关判断；<br/>
@@ -149,36 +155,20 @@ namespace Snet.Windows.KMSim.chart
 
             try
             {
-                while (true)
+                while (!token.IsCancellationRequested)
                 {
-                    token.ThrowIfCancellationRequested();
-
-                    try
+                    // 避免每次都枚举完整集合，Any() 在 IEnumerable 上能尽早返回
+                    if (wpfPlot?.Plot?.GetPlottables()?.Any() == true)
                     {
-                        // 避免每次都枚举完整集合，Any() 在 IEnumerable 上能尽早返回
-                        if (wpfPlot?.Plot?.GetPlottables()?.Any() == true)
-                        {
-                            // Refresh 必须在 UI 线程
-                            wpfPlot.Dispatcher.Invoke(() => wpfPlot.Refresh());
-                        }
-                    }
-                    catch (OperationCanceledException)
-                    {
-                        throw;
-                    }
-                    catch
-                    {
-                        // 捕获绘图异常：日志或吞掉，避免刷新循环中断
-                        // 这里不抛出异常，继续下一次循环
+                        // Refresh 必须在 UI 线程
+                        wpfPlot.Dispatcher.Invoke(() => wpfPlot.Refresh());
                     }
 
                     await Task.Delay(millisecond, token).ConfigureAwait(false);
                 }
             }
-            catch (OperationCanceledException)
-            {
-                // 正常取消，设置状态为 false
-            }
+            catch (TaskCanceledException) { }
+            catch (OperationCanceledException) { }
             finally
             {
                 AutoRefreshStatus = false;
@@ -206,15 +196,14 @@ namespace Snet.Windows.KMSim.chart
                 case Snet.Model.@enum.LanguageType.zh:
                     wpfPlot.Plot.XLabel(basics.XTitle ?? string.Empty, 13);
                     wpfPlot.Plot.YLabel(basics.YTitle ?? string.Empty, 13);
-                    wpfPlot.Plot.Legend.FontName = ScottPlot.Fonts.Detect("宋体");
-                    wpfPlot.Plot.Font.Set(ScottPlot.Fonts.Detect("宋体"));
+                    wpfPlot.Plot.Legend.FontName = ScottPlot.Fonts.Detect("微软雅黑");
+                    wpfPlot.Plot.Font.Set(ScottPlot.Fonts.Detect("微软雅黑"));
                     break;
                 case Snet.Model.@enum.LanguageType.en:
                     wpfPlot.Plot.XLabel(basics.XTitleEN ?? string.Empty, 13);
                     wpfPlot.Plot.YLabel(basics.YTitleEN ?? string.Empty, 13);
                     break;
             }
-
             // 显示图例（右侧或者右上）
             if (basics.LegendRight)
             {
@@ -225,6 +214,32 @@ namespace Snet.Windows.KMSim.chart
                 legend = wpfPlot.Plot.ShowLegend(Alignment.UpperRight);
             }
 
+            if (basics.YCrosshairText || basics.XCrosshairText)
+            {
+                CH = wpfPlot.Plot.Add.Crosshair(0, 0);
+                CH.TextColor = Colors.White;
+                string colorHex = "#27A5F7";
+                CH.HorizontalLine.Color = new(colorHex);
+                CH.VerticalLine.Color = new(colorHex);
+                CH.TextBackgroundColor = CH.HorizontalLine.Color;
+                wpfPlot.MouseMove += (s, e) =>
+                {
+                    Point p = e.GetPosition(wpfPlot);
+                    ScottPlot.Pixel mousePixel = new(p.X * wpfPlot.DisplayScale, p.Y * wpfPlot.DisplayScale);
+                    ScottPlot.Coordinates coordinates = wpfPlot.Plot.GetCoordinates(mousePixel);
+                    CH.Position = coordinates;
+                    if (basics.YCrosshairText)
+                    {
+                        CH.HorizontalLine.Text = $"{coordinates.Y:N3}";
+                    }
+                    if (basics.XCrosshairText)
+                    {
+                        CH.VerticalLine.Text = $"{coordinates.X:N3}";
+                    }
+                    wpfPlot.Refresh();
+                };
+            }
+
             if (basics.HideGrid)
             {
                 wpfPlot.Plot.HideGrid();
@@ -233,11 +248,12 @@ namespace Snet.Windows.KMSim.chart
             // 订阅语言事件（先取消再订阅以避免重复订阅）
             OnLanguageEventAsync -= ChartOperate_OnLanguageEventAsync;
             OnLanguageEventAsync += ChartOperate_OnLanguageEventAsync;
+            // 订阅皮肤时间（先取消再订阅以避免重复订阅）
+            SkinHandler.OnSkinEvent -= SkinHandler_OnSkinEvent;
+            SkinHandler.OnSkinEvent += SkinHandler_OnSkinEvent;
 
             // 设置默认菜单及皮肤事件
             DefaultMenu(wpfPlot);
-            SkinHandler.OnSkinEvent -= SkinHandler_OnSkinEvent;
-            SkinHandler.OnSkinEvent += SkinHandler_OnSkinEvent;
 
             // 如果没有启动自动刷新，则启动一个新 CTS 并运行 AutoRefreshAsync
             if (AutoRefreshTokenSource == null)
@@ -511,6 +527,26 @@ namespace Snet.Windows.KMSim.chart
         }
 
         /// <summary>
+        /// 清空所有线条数据<br/>
+        /// </summary>
+        public OperateResult Clear()
+        {
+            BegOperate();
+            try
+            {
+                foreach (var data in DataLoggerChartManage)
+                {
+                    data.Value.Clear();
+                }
+                return EndOperate(true);
+            }
+            catch (Exception ex)
+            {
+                return EndOperate(false, ex.Message, exception: ex);
+            }
+        }
+
+        /// <summary>
         /// 获取指定 SN 线条的全部数据<br/>
         /// </summary>
         public OperateResult Get(string sn)
@@ -558,8 +594,10 @@ namespace Snet.Windows.KMSim.chart
                         {
                             dark = new ScottPlot.PlotStyles.Dark()
                             {
-                                FigureBackgroundColor = new(ToDrawingColor(System.Windows.Media.Color.FromArgb(0, 255, 0, 0))),
-                                DataBackgroundColor = new(ToDrawingColor(System.Windows.Media.Color.FromArgb(0, 255, 0, 0)))
+                                FigureBackgroundColor = new("#454545"),
+                                DataBackgroundColor = new("#454545"),
+                                LegendBackgroundColor = new("#454545"),
+                                //LegendOutlineColor = new(ToDrawingColor(System.Windows.Media.Color.FromArgb(0, 255, 0, 0))),
                             };
                         }
                         plot?.Plot.SetStyle(dark);
@@ -569,8 +607,8 @@ namespace Snet.Windows.KMSim.chart
                         {
                             light = new ScottPlot.PlotStyles.Light()
                             {
-                                FigureBackgroundColor = new(ToDrawingColor(System.Windows.Media.Color.FromArgb(0, 255, 0, 0))),
-                                DataBackgroundColor = new(ToDrawingColor(System.Windows.Media.Color.FromArgb(0, 255, 0, 0)))
+                                //LegendBackgroundColor = new("#454545"),
+                                //LegendOutlineColor = new(ToDrawingColor(System.Windows.Media.Color.FromArgb(0, 255, 0, 0))),
                             };
                         }
                         plot?.Plot.SetStyle(light);
@@ -610,8 +648,8 @@ namespace Snet.Windows.KMSim.chart
                     case Snet.Model.@enum.LanguageType.zh:
                         wpfPlot.Plot.XLabel(basics.XTitle ?? string.Empty, 13);
                         wpfPlot.Plot.YLabel(basics.YTitle ?? string.Empty, 13);
-                        wpfPlot.Plot.Legend.FontName = ScottPlot.Fonts.Detect("宋体");
-                        wpfPlot.Plot.Font.Set(ScottPlot.Fonts.Detect("宋体"));
+                        wpfPlot.Plot.Legend.FontName = ScottPlot.Fonts.Detect("微软雅黑");
+                        wpfPlot.Plot.Font.Set(ScottPlot.Fonts.Detect("微软雅黑"));
                         break;
                     case Snet.Model.@enum.LanguageType.en:
                         wpfPlot.Plot.XLabel(basics.XTitleEN ?? string.Empty, 13);
@@ -636,14 +674,15 @@ namespace Snet.Windows.KMSim.chart
                     plot.Menu?.Clear();
 
                     plot.Menu?.Add(LanguageOperate.GetLanguageValue("调整"), Adjust);
-                    plot.Menu?.AddSeparator();
                     plot.Menu?.Add(LanguageOperate.GetLanguageValue("重置"), Reset);
                     plot.Menu?.AddSeparator();
                     plot.Menu?.Add(LanguageOperate.GetLanguageValue("保存图片"), SaveImage);
-                    plot.Menu?.AddSeparator();
                     plot.Menu?.Add(LanguageOperate.GetLanguageValue("复制图片"), CopyImage);
-                    plot.Menu?.AddSeparator();
-                    plot.Menu?.Add(LanguageOperate.GetLanguageValue("移除所有线条"), RemoveAll);
+                    if (basics.LineRemove)
+                    {
+                        plot.Menu?.AddSeparator();
+                        plot.Menu?.Add(LanguageOperate.GetLanguageValue("移除线条"), RemoveLine);
+                    }
                     if (basics.LineAdjust)
                     {
                         plot.Menu?.AddSeparator();
@@ -755,7 +794,7 @@ namespace Snet.Windows.KMSim.chart
         /// <summary>
         /// 移除所有线条并重置样式<br/>
         /// </summary>
-        private void RemoveAll(Plot plot)
+        private void RemoveLine(Plot plot)
         {
             if (plot == null)
                 return;
@@ -827,7 +866,7 @@ namespace Snet.Windows.KMSim.chart
                 wpfPlot?.Refresh();
             }
 
-            DialogHost.Show(form, "ChartLineOperate", Loaded, Closing);
+            DialogHost.Show(form, "DialogHost_ClickClose", Loaded, Closing);
         }
 
         /// <summary>

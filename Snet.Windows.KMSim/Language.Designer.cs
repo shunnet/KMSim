@@ -124,6 +124,15 @@ namespace Snet.Windows.KMSim {
         }
         
         /// <summary>
+        ///   查找类似 [ Shunnet.top ] Windows 键鼠模拟工具 - 命令查找窗口 的本地化字符串。
+        /// </summary>
+        internal static string 命令查找窗口 {
+            get {
+                return ResourceManager.GetString("命令查找窗口", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   查找类似 帮助 的本地化字符串。
         /// </summary>
         internal static string 帮助 {

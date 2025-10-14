@@ -31,8 +31,9 @@ namespace Snet.Windows.KMSim.handler
         /// </summary>
         /// <param name="type">目标类型</param>
         /// <param name="xmlPath">XML 注释文件路径</param>
+        /// <param name="color">十六进制的颜色</param>
         /// <returns>方法信息列表</returns>
-        public static List<EditModel> Get(this Type type, string xmlPath)
+        public static List<EditModel> Get(this Type type, string xmlPath, string color = "#4EB2FF")
         {
             var list = new List<EditModel>();
             if (type == null) return list;
@@ -60,7 +61,7 @@ namespace Snet.Windows.KMSim.handler
                 list.Add(new EditModel
                 {
                     Name = methodName,
-                    Color = "#DE121F",
+                    Color = color,
                     Description = description.Trim()
                 });
             }

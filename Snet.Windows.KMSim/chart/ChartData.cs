@@ -54,6 +54,11 @@ namespace Snet.Windows.KMSim.chart
             public bool LegendRight { get; set; }
 
             /// <summary>
+            /// 移除所有线条右键菜单
+            /// </summary>
+            public bool LineRemove { get; set; }
+
+            /// <summary>
             /// 是否需要线条调整右键菜单
             /// </summary>
             public bool LineAdjust { get; set; }
@@ -62,6 +67,16 @@ namespace Snet.Windows.KMSim.chart
             /// 刷新时间
             /// </summary>
             public int RefreshTime { get; set; } = 100;
+
+            /// <summary>
+            /// Y轴的十字准线数据
+            /// </summary>
+            public bool YCrosshairText { get; set; }
+
+            /// <summary>
+            /// X轴的十字准线数据
+            /// </summary>
+            public bool XCrosshairText { get; set; }
         }
 
         /// <summary>

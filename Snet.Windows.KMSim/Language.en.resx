@@ -151,4 +151,7 @@
   <data name="监控" xml:space="preserve">
     <value>Monitor</value>
   </data>
+  <data name="命令查找窗口" xml:space="preserve">
+    <value>[ Shunnet.top ] Windows KMSim Tool - Command Lookup Window</value>
+  </data>
 </root>

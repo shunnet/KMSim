@@ -1,7 +1,9 @@
-﻿using Snet.Core.handler;
+﻿using Microsoft.Extensions.DependencyInjection;
+using Snet.Core.handler;
 using Snet.Log;
 using Snet.Model.data;
 using Snet.Windows.Core.handler;
+using Snet.Windows.KMSim.utility;
 using System.Windows;
 
 namespace Snet.Windows.KMSim
@@ -34,8 +36,13 @@ namespace Snet.Windows.KMSim
             //启动全局异常捕捉
             RegisterEvents();
 
+            //注入钩子
+            InjectionWpf.AddService(s => s.AddSingleton<GlobalKeyboardHook>());
+
             //打开主窗口
             InjectionWpf.Window<MainWindow, MainWindowViewModel>(true).Show();
+
+
         }
 
         #region 全局异常捕捉
