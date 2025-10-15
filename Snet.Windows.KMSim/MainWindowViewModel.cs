@@ -54,7 +54,6 @@ namespace Snet.Windows.KMSim
             globalKeyboardHook = hook;
             globalKeyboardHook.SetHook();
             globalKeyboardHook.KeyEvent += KeyEvent;
-
         }
 
         #region 对象
@@ -430,6 +429,7 @@ namespace Snet.Windows.KMSim
             if (commandWindow == null)
             {
                 commandWindow = new CommandWindow();
+                commandWindow.DataContext = new CommandWindowViewModel();
                 commandWindow.Show();
                 commandWindow.Closed += (s, e) =>
                 {
