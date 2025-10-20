@@ -214,6 +214,12 @@ namespace Snet.Windows.KMSim.chart
                 legend = wpfPlot.Plot.ShowLegend(Alignment.UpperRight);
             }
 
+            //wpfPlot.Plot.Axes.Bottom.TickLabelStyle.IsVisible = false;
+            //wpfPlot.Plot.Axes.Top.IsVisible = false;
+            //wpfPlot.Plot.Axes.Bottom.IsVisible = false;
+            //wpfPlot.Plot.Axes.Left.IsVisible = true;
+            //wpfPlot.Plot.Axes.Right.IsVisible = false;
+
             if (basics.YCrosshairText || basics.XCrosshairText)
             {
                 CH = wpfPlot.Plot.Add.Crosshair(0, 0);
@@ -222,22 +228,8 @@ namespace Snet.Windows.KMSim.chart
                 CH.HorizontalLine.Color = new(colorHex);
                 CH.VerticalLine.Color = new(colorHex);
                 CH.TextBackgroundColor = CH.HorizontalLine.Color;
-                wpfPlot.MouseMove += (s, e) =>
-                {
-                    Point p = e.GetPosition(wpfPlot);
-                    ScottPlot.Pixel mousePixel = new(p.X * wpfPlot.DisplayScale, p.Y * wpfPlot.DisplayScale);
-                    ScottPlot.Coordinates coordinates = wpfPlot.Plot.GetCoordinates(mousePixel);
-                    CH.Position = coordinates;
-                    if (basics.YCrosshairText)
-                    {
-                        CH.HorizontalLine.Text = $"{coordinates.Y:N3}";
-                    }
-                    if (basics.XCrosshairText)
-                    {
-                        CH.VerticalLine.Text = $"{coordinates.X:N3}";
-                    }
-                    wpfPlot.Refresh();
-                };
+                wpfPlot.MouseMove -= WpfPlot_MouseMove;
+                wpfPlot.MouseMove += WpfPlot_MouseMove;
             }
 
             if (basics.HideGrid)
@@ -262,6 +254,25 @@ namespace Snet.Windows.KMSim.chart
                 // 不在 UI 线程等待 AutoRefreshAsync 完成；让其后台运行
                 _ = AutoRefreshAsync(AutoRefreshTokenSource.Token, basics.RefreshTime);
             }
+        }
+        /// <summary>
+        /// 鼠标移动事件处理（更新十字线位置与文本）
+        /// </summary>
+        private void WpfPlot_MouseMove(object sender, System.Windows.Input.MouseEventArgs e)
+        {
+            Point p = e.GetPosition(wpfPlot);
+            ScottPlot.Pixel mousePixel = new(p.X * wpfPlot.DisplayScale, p.Y * wpfPlot.DisplayScale);
+            ScottPlot.Coordinates coordinates = wpfPlot.Plot.GetCoordinates(mousePixel);
+            CH.Position = coordinates;
+            if (basics.YCrosshairText)
+            {
+                CH.HorizontalLine.Text = $"{coordinates.Y:N3}";
+            }
+            if (basics.XCrosshairText)
+            {
+                CH.VerticalLine.Text = $"{coordinates.X:N3}";
+            }
+            wpfPlot.Refresh();
         }
 
         /// <summary>

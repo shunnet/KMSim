@@ -6,11 +6,14 @@ using Snet.Windows.Controls.handler;
 using Snet.Windows.Core.mvvm;
 using Snet.Windows.KMSim.chart;
 using Snet.Windows.KMSim.core;
+using Snet.Windows.KMSim.data;
+using Snet.Windows.KMSim.handler;
 using Snet.Windows.KMSim.utility;
 using System.Diagnostics;
 using System.IO;
 using System.Windows.Controls;
 using System.Windows.Input;
+using static Snet.Windows.KMSim.utility.GlobalKeyboardHook;
 using static Snet.Windows.KMSim.utility.SystemMonitoring;
 using MessageBox = Snet.Windows.Controls.message.MessageBox;
 
@@ -22,10 +25,10 @@ namespace Snet.Windows.KMSim
         {
             // 界面消息处理
             uiMessage.OnInfoEventAsync += async (object? sender, Model.data.EventInfoResult e) => Info = e.Message;
-            _ = uiMessage.StartAsync().ConfigureAwait(false);
+            uiMessage.StartAsync().ConfigureAwait(false);
 
             // 获取鼠标坐标
-            _ = GetXYAsync(globalToken.Token).ConfigureAwait(false);
+            GetXYAsync(globalToken.Token).ConfigureAwait(false);
 
             // 图表操作
             chartOperate = ChartOperate.Instance(new()
@@ -34,7 +37,7 @@ namespace Snet.Windows.KMSim
                 LineAdjust = true,
                 HideGrid = true,
                 YCrosshairText = true,
-                RefreshTime = 10
+                RefreshTime = _interval
             });
             chartOperate.On();
             chartOperate.Create(new() { SN = "Cpu", Title = "处理器", TitleEN = "Cpu" });
@@ -48,12 +51,15 @@ namespace Snet.Windows.KMSim
             systemMonitoring = SystemMonitoring.Instance();
 
             // 更新系统检测值
-            _ = UpdateSystemMonitoringValueAsync(globalToken.Token);
+            UpdateSystemMonitoringValueAsync(globalToken.Token).ConfigureAwait(false);
 
             //设置键盘监听
             globalKeyboardHook = hook;
             globalKeyboardHook.SetHook();
             globalKeyboardHook.KeyEvent += KeyEvent;
+
+            //显示最后一次的操作
+            SGAsync().ConfigureAwait(false);
         }
 
         #region 对象
@@ -80,9 +86,36 @@ namespace Snet.Windows.KMSim
         private CancellationTokenSource globalToken = new CancellationTokenSource();
 
         /// <summary>
+        /// 执行逻辑时的取消控制
+        /// </summary>
+        private CancellationTokenSource? operateToken;
+
+        /// <summary>
         /// 命令窗口
         /// </summary>
         private CommandWindow commandWindow;
+
+        // 各功能独立的操作状态标志
+        private bool _isStarting = false;
+        private bool _isStopping = false;
+        private bool _isRetrying = false;
+        /// <summary>
+        /// 间隔
+        /// </summary>
+        private int _interval = 100;
+        /// <summary>
+        /// 锁
+        /// </summary>
+        private readonly object _sync = new object();
+        /// <summary>
+        /// 任务
+        /// </summary>
+        private Task? _runTask;
+
+        /// <summary>
+        /// 配置文件
+        /// </summary>
+        private string configFile = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "config", "KMSim.json");
 
         #endregion 对象
 
@@ -92,11 +125,6 @@ namespace Snet.Windows.KMSim
         /// 文件存储路径
         /// </summary>
         private string FilePath;
-
-        /// <summary>
-        /// 文件保存的路径
-        /// </summary>
-        private bool SavePath;
 
         /// <summary>
         /// 系统名称
@@ -208,25 +236,91 @@ namespace Snet.Windows.KMSim
         #region 方法
 
         #region 其余操作
+
         /// <summary>
-        /// 按键
+        /// 窗体关闭时,保存文件位置,以便下次打开软件读取文件
         /// </summary>
-        /// <param name="key">键码</param>
-        public void KeyEvent(Key key)
+        /// <returns></returns>
+        public async Task CSAsync()
         {
-            if (key == Key.F1)
+            if (!FilePath.IsNullOrWhiteSpace() && !EditText.IsNullOrWhiteSpace())
             {
-                _ = StartAsync().ConfigureAwait(false);
-            }
-            if (key == Key.F2)
-            {
-                _ = StopAsync().ConfigureAwait(false);
-            }
-            if (key == Key.F3)
-            {
-                _ = RetryAsync().ConfigureAwait(false);
+                CCModel config = new()
+                {
+                    StoragePath = FilePath,
+                    LogicCode = EditText
+                };
+                FileHandler.StringToFile(configFile, config.ToJson(true));
+                FileHandler.StringToFile(FilePath, EditText);
             }
         }
+
+        /// <summary>
+        /// 打开时通过配置获取显示数据
+        /// </summary>
+        /// <returns></returns>
+        public async Task SGAsync()
+        {
+            if (File.Exists(configFile))
+            {
+                string json = FileHandler.FileToString(configFile);
+                CCModel config = json.ToJsonEntity<CCModel>();
+                FilePath = config.StoragePath;
+                EditText = config.LogicCode;
+            }
+        }
+
+        /// <summary>
+        /// 按键事件处理（同类操作仅允许一个进行）
+        /// </summary>
+        /// <param name="key">按下的按键</param>
+        /// <param name="keyboard">键盘事件类型（按下/松开）</param>
+        public async void KeyEvent(Key key, KeyboardEventType keyboard)
+        {
+            // 仅在按下时处理
+            if (keyboard != KeyboardEventType.KeyDown)
+                return;
+
+            try
+            {
+                if (key == Key.F10)
+                {
+                    // 若已在执行开始操作，则忽略
+                    if (_isStarting) return;
+
+                    _isStarting = true;
+                    await StartAsync().ConfigureAwait(false);
+                }
+                else if (key == Key.F11)
+                {
+                    // 若已在执行停止操作，则忽略
+                    if (_isStopping) return;
+
+                    _isStopping = true;
+                    await StopAsync().ConfigureAwait(false);
+                }
+                else if (key == Key.F12)
+                {
+                    // 若已在执行重试操作，则忽略
+                    if (_isRetrying) return;
+
+                    _isRetrying = true;
+                    await RetryAsync().ConfigureAwait(false);
+                }
+            }
+            catch (Exception ex)
+            {
+                await uiMessage.ShowAsync($"{App.LanguageOperate.GetLanguageValue("异常")}: {ex.Message}");
+            }
+            finally
+            {
+                // 无论是否异常，操作结束后释放对应标志
+                if (key == Key.F10) _isStarting = false;
+                else if (key == Key.F11) _isStopping = false;
+                else if (key == Key.F12) _isRetrying = false;
+            }
+        }
+
 
         /// <summary>
         /// 更新线条数据
@@ -236,6 +330,25 @@ namespace Snet.Windows.KMSim
             chartOperate.Update(name, value);
         }
 
+
+        /// <summary>
+        /// 显示设备信息
+        /// </summary>
+        private async Task ShowDeviceInfoAsync(string info)
+        {
+            if (info.Contains("；"))
+            {
+                foreach (var item in info.Split('；'))
+                {
+                    await uiMessage.ShowAsync(item, withTime: false);
+                }
+            }
+            else
+            {
+                await uiMessage.ShowAsync(info, withTime: false);
+            }
+        }
+
         /// <summary>
         /// 更新系统检测值
         /// </summary>
@@ -243,86 +356,92 @@ namespace Snet.Windows.KMSim
         {
             try
             {
-                while (!token.IsCancellationRequested)
+                await Task.Run(async () =>
                 {
-                    HardwareData hardwareData = systemMonitoring.GetInfo();
+                    HardwareData hardwareData = systemMonitoring.GetInfo(true);
 
-                    await Task.Run(() =>
+                    await ShowDeviceInfoAsync(hardwareData.SystemName);
+                    await ShowDeviceInfoAsync(hardwareData.SystemVer);
+                    await ShowDeviceInfoAsync(hardwareData.SystemRunTime);
+                    await ShowDeviceInfoAsync(hardwareData.CpuInfo);
+                    await ShowDeviceInfoAsync(hardwareData.GpuInfo);
+                    await ShowDeviceInfoAsync(hardwareData.MemoryInfo);
+                    await ShowDeviceInfoAsync(hardwareData.DiskInfo);
+                    await ShowDeviceInfoAsync(hardwareData.BiosInfo);
+                    await ShowDeviceInfoAsync(hardwareData.NetworkInfo);
+
+                    while (!token.IsCancellationRequested)
                     {
-                        System.Windows.Application.Current?.Dispatcher.Invoke(new Action(() =>
+                        hardwareData = systemMonitoring.GetInfo();
+
+                        foreach (var iteminfolist in hardwareData.Info)
                         {
-
-                            SystemName = hardwareData.SystemName;
-                            SystemVer = hardwareData.SystemVer;
-                            SystemRunTime = hardwareData.SystemRunTime;
-
-                            foreach (var iteminfolist in hardwareData.Info)
+                            if (iteminfolist.Key.Equals("内存"))
                             {
-                                if (iteminfolist.Key.Equals("内存"))
+                                foreach (var item in iteminfolist.Values)
                                 {
-                                    foreach (var item in iteminfolist.Vlaues)
+                                    double value = double.Parse(item.Value);
+                                    if (item.Key.Equals("负载,Memory") && value > 0)
                                     {
-                                        if (item.Key.Equals("负载,Memory"))
-                                        {
-                                            UpdateLineSeriesData("RAM", double.Parse(item.Vlaue));
-                                        }
+                                        UpdateLineSeriesData("RAM", value);
                                     }
                                 }
-                                if (iteminfolist.Key.Equals("英伟达显卡") || iteminfolist.Key.Equals("因特尔显卡") || iteminfolist.Key.Equals("AMD显卡"))
+                            }
+                            if (iteminfolist.Key.Equals("英伟达显卡") || iteminfolist.Key.Equals("因特尔显卡") || iteminfolist.Key.Equals("AMD显卡"))
+                            {
+                                foreach (var item in iteminfolist.Values)
                                 {
-                                    foreach (var item in iteminfolist.Vlaues)
+                                    double value = double.Parse(item.Value);
+                                    if (item.Key.Equals("负载,GPU Core") && value > 0)
                                     {
-                                        if (item.Key.Equals("负载,GPU Core"))
-                                        {
-                                            UpdateLineSeriesData("Gpu", double.Parse(item.Vlaue));
-                                        }
-                                        if (item.Key.Equals("温度,GPU Core"))
-                                        {
-                                            UpdateLineSeriesData("GpuTemp", double.Parse(item.Vlaue));
-                                        }
+                                        UpdateLineSeriesData("Gpu", value);
+                                    }
+                                    if (item.Key.Equals("温度,GPU Core") && value > 0)
+                                    {
+                                        UpdateLineSeriesData("GpuTemp", value);
                                     }
                                 }
-                                if (iteminfolist.Key.Equals("处理器"))
+                            }
+                            if (iteminfolist.Key.Equals("处理器"))
+                            {
+                                foreach (var item in iteminfolist.Values)
                                 {
-                                    foreach (var item in iteminfolist.Vlaues)
+                                    double value = double.Parse(item.Value);
+                                    if (item.Key.Equals("负载,CPU Total") && value > 0)
                                     {
-                                        if (item.Key.Equals("负载,CPU Total"))
-                                        {
-                                            UpdateLineSeriesData("Cpu", double.Parse(item.Vlaue));
-                                        }
-                                        if (item.Key.Equals("温度,Core Max"))
-                                        {
-                                            UpdateLineSeriesData("CpuTemp", double.Parse(item.Vlaue));
-                                        }
+                                        UpdateLineSeriesData("Cpu", value);
                                     }
-                                }
-
-                                if (iteminfolist.Key.Equals("网络"))
-                                {
-                                    foreach (var item in iteminfolist.Vlaues)
+                                    if (item.Key.Equals("温度,Core Max") && value > 0)
                                     {
-                                        if (item.Key.Equals("负载,Network Utilization"))
-                                        {
-                                            if (double.Parse(item.Vlaue) > 0)
-                                            {
-                                                UpdateLineSeriesData("NET", double.Parse(item.Vlaue));
-                                            }
-                                        }
+                                        UpdateLineSeriesData("CpuTemp", value);
                                     }
                                 }
                             }
 
-                        }));
-                    }, token).ConfigureAwait(false);
-
-                    await Task.Delay(300, token);
-                }
+                            if (iteminfolist.Key.Equals("网络"))
+                            {
+                                foreach (var item in iteminfolist.Values)
+                                {
+                                    if (item.Key.Equals("负载,Network Utilization"))
+                                    {
+                                        double value = double.Parse(item.Value);
+                                        if (value > 0)
+                                        {
+                                            UpdateLineSeriesData("NET", value);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        await Task.Delay(_interval, token);
+                    }
+                }, token).ConfigureAwait(false);
             }
             catch (TaskCanceledException) { }
             catch (OperationCanceledException) { }
             catch (Exception ex)
             {
-                await MessageBox.Show($"error : {ex.Message}", "tips", Controls.@enum.MessageBoxButton.OK, Controls.@enum.MessageBoxImage.Exclamation);
+                await uiMessage.ShowAsync(ex.Message);
             }
         }
 
@@ -344,7 +463,7 @@ namespace Snet.Windows.KMSim
                             // 显示到窗口标题
                             SystemTitle = $"{App.LanguageOperate.GetLanguageValue("SystemTitle")}  ‹ {desktopPoint.X:F0} , {desktopPoint.Y:F0} ›";
                         }
-                        await Task.Delay(30, token);
+                        await Task.Delay(_interval, token);
                     }
                 }, token).ConfigureAwait(false);
             }
@@ -352,7 +471,7 @@ namespace Snet.Windows.KMSim
             catch (OperationCanceledException) { }
             catch (Exception ex)
             {
-                await MessageBox.Show($"error : {ex.Message}", "tips", Controls.@enum.MessageBoxButton.OK, Controls.@enum.MessageBoxImage.Exclamation);
+                await MessageBox.Show($"{App.LanguageOperate.GetLanguageValue("异常")} : {ex.Message}", App.LanguageOperate.GetLanguageValue("提示"), Controls.@enum.MessageBoxButton.OK, Controls.@enum.MessageBoxImage.Exclamation);
             }
         }
 
@@ -412,12 +531,29 @@ namespace Snet.Windows.KMSim
         /// <returns></returns>
         public async Task ExitAsync()
         {
-            globalToken.Cancel();
+            if (!EditText.IsNullOrWhiteSpace() && FilePath.IsNullOrWhiteSpace())
+            {
+                if (await MessageBox.Show(App.LanguageOperate.GetLanguageValue("检测到有输入，是否保存？"), App.LanguageOperate.GetLanguageValue("提示"), Controls.@enum.MessageBoxButton.YesNo, Controls.@enum.MessageBoxImage.Question))
+                {
+                    if (!await saveSelect(App.LanguageOperate.GetLanguageValue("成功保存至")))
+                    {
+                        await MessageBox.Show(App.LanguageOperate.GetLanguageValue("已取消操作"), App.LanguageOperate.GetLanguageValue("提示"), Controls.@enum.MessageBoxButton.OK, Controls.@enum.MessageBoxImage.Information);
+                    }
+                }
+            }
+
+            if (!EditText.IsNullOrWhiteSpace() && !FilePath.IsNullOrWhiteSpace())
+            {
+                FileHandler.StringToFile(FilePath, EditText);
+            }
+
+            globalToken?.Cancel();
+            operateToken?.Cancel();
             commandWindow?.Close();
             await uiMessage.StopAsync().ConfigureAwait(false);
-            globalKeyboardHook?.KeyEvent -= KeyEvent;
             globalKeyboardHook?.Unhook();
             System.Windows.Application.Current.Shutdown();
+            await CSAsync().ConfigureAwait(false);
         }
 
         /// <summary>
@@ -442,31 +578,176 @@ namespace Snet.Windows.KMSim
         #endregion 帮助操作
 
         #region 逻辑操作
+
         /// <summary>
-        /// 开始
+        /// 开始执行（线程安全，可重复调用）
         /// </summary>
-        /// <returns></returns>
-        private async Task StartAsync()
+        private Task StartAsync()
         {
-            await MessageBox.Show($"StartAsync", "tips", Controls.@enum.MessageBoxButton.OK, Controls.@enum.MessageBoxImage.Information);
-            await uiMessage.ShowAsync("StartAsync");
+            Task? previousTask;
+
+            lock (_sync)
+            {
+                // 保存旧任务
+                previousTask = _runTask;
+
+                // 取消并释放旧 CTS
+                operateToken?.Cancel();
+                operateToken?.Dispose();
+                operateToken = new CancellationTokenSource();
+
+                // 启动新的任务
+                _runTask = RunLoopAsync(operateToken.Token);
+            }
+
+            // 异步等待旧任务完成（不会阻塞 UI）
+            previousTask?.ContinueWith(t =>
+            {
+                try { t.WaitAsync(operateToken.Token).ConfigureAwait(false); } catch { }
+            }, TaskScheduler.Default).ConfigureAwait(false);
+
+            return _runTask;
         }
+
         /// <summary>
-        /// 停止
+        /// 停止执行（线程安全）
         /// </summary>
-        /// <returns></returns>
         private async Task StopAsync()
         {
-            await uiMessage.ShowAsync("StopAsync");
+            Task? running;
+            lock (_sync)
+            {
+                operateToken?.Cancel();
+                running = _runTask;
+            }
+
+            if (running != null)
+            {
+                try { await running.ConfigureAwait(false); }
+                catch { } // 忽略任务异常
+            }
         }
+
         /// <summary>
-        /// 重试
+        /// 重试：先停止再启动
         /// </summary>
-        /// <returns></returns>
         private async Task RetryAsync()
         {
-            await uiMessage.ShowAsync("RetryAsync");
+            await StopAsync().ConfigureAwait(false);
+            await StartAsync().ConfigureAwait(false);
         }
+
+        /// <summary>
+        /// 实际运行循环（死循环后台执行，顺序命令正常执行）
+        /// </summary>
+        private async Task RunLoopAsync(CancellationToken token)
+        {
+            List<Task> endlessTasks = new();
+
+            try
+            {
+                if (EditText.IsNullOrWhiteSpace())
+                    return;
+
+                List<WhileModel> models = EditText.Parse();
+
+                foreach (var item in models)
+                {
+                    if (item.EndlessLoop)
+                    {
+                        // 死循环任务单独并发执行
+                        var t = Task.Run(async () =>
+                        {
+                            try
+                            {
+                                while (!token.IsCancellationRequested)
+                                {
+                                    foreach (var logic in item.Logics)
+                                    {
+                                        token.ThrowIfCancellationRequested();
+                                        await ExecuteMethodAsync(logic.MethodName, logic.Parameters, token).ConfigureAwait(false);
+                                    }
+                                }
+                            }
+                            catch (OperationCanceledException)
+                            {
+                                // 安全退出
+                            }
+                            catch (Exception ex)
+                            {
+                                // 可以记录日志，不影响其他任务
+                                await uiMessage.ShowAsync($"{App.LanguageOperate.GetLanguageValue("死循环任务异常")}：{ex}");
+                            }
+                        }, token);
+
+                        endlessTasks.Add(t);
+                    }
+                    else
+                    {
+                        // 普通循环同步执行
+                        for (int i = 0; i < item.LoopCount; i++)
+                        {
+                            token.ThrowIfCancellationRequested();
+
+                            foreach (var logic in item.Logics)
+                            {
+                                token.ThrowIfCancellationRequested();
+                                await ExecuteMethodAsync(logic.MethodName, logic.Parameters, token).ConfigureAwait(false);
+                            }
+                        }
+                    }
+                }
+
+                // 等待所有死循环任务（可选，如果希望 RunLoopAsync 直到手动停止才结束）
+                if (endlessTasks.Count > 0)
+                    await Task.WhenAll(endlessTasks);
+            }
+            catch (OperationCanceledException)
+            {
+                await uiMessage.ShowAsync(App.LanguageOperate.GetLanguageValue("流程已停止"));
+            }
+            catch (Exception ex)
+            {
+                await uiMessage.ShowAsync($"{App.LanguageOperate.GetLanguageValue("流程异常")}：{ex}");
+            }
+            finally
+            {
+                lock (_sync)
+                {
+                    operateToken?.Dispose();
+                    operateToken = null;
+                    _runTask = null;
+                }
+            }
+        }
+
+
+
+
+        /// <summary>
+        /// 执行指定方法（反射 + 异步）
+        /// </summary>
+        private async Task ExecuteMethodAsync(string methodName, object[]? parameters, CancellationToken token = default)
+        {
+            try
+            {
+                object? result = await App.KMSimCore.InvokeMethodAsync(methodName, parameters, uiMessage, token);
+
+                if (result != null)
+                    await uiMessage.ShowAsync($"{App.LanguageOperate.GetLanguageValue("执行")} {methodName} {App.LanguageOperate.GetLanguageValue("返回")} ：{result}");
+                else
+                    await uiMessage.ShowAsync($"{App.LanguageOperate.GetLanguageValue("执行")} {methodName} {App.LanguageOperate.GetLanguageValue("成功")}");
+            }
+            catch (OperationCanceledException)
+            {
+                await uiMessage.ShowAsync($"{App.LanguageOperate.GetLanguageValue("执行")} {methodName} {App.LanguageOperate.GetLanguageValue("已取消")}");
+            }
+            catch (Exception ex)
+            {
+                await uiMessage.ShowAsync($"{App.LanguageOperate.GetLanguageValue("执行")} {methodName} {App.LanguageOperate.GetLanguageValue("出错")} ：{ex.Message}");
+            }
+        }
+
         #endregion 逻辑操作
 
         #region 文件操作
@@ -481,25 +762,26 @@ namespace Snet.Windows.KMSim
             if (!EditText.IsNullOrWhiteSpace() && !FilePath.IsNullOrWhiteSpace())
             {
                 FileHandler.StringToFile(FilePath, EditText);
-                await uiMessage.ShowAsync($"已保存至：{FilePath}");
+                await uiMessage.ShowAsync($"{App.LanguageOperate.GetLanguageValue("已保存至")}：{FilePath}");
             }
 
 
             if (!EditText.IsNullOrWhiteSpace() && FilePath.IsNullOrWhiteSpace())
             {
-                if (await MessageBox.Show("检测到有输入，是否保存？", "提示", Controls.@enum.MessageBoxButton.YesNo, Controls.@enum.MessageBoxImage.Question))
+                if (await MessageBox.Show(App.LanguageOperate.GetLanguageValue("检测到有输入，是否保存？"), App.LanguageOperate.GetLanguageValue("提示"), Controls.@enum.MessageBoxButton.YesNo, Controls.@enum.MessageBoxImage.Question))
                 {
-                    if (!await saveSelect("成功保存至"))
+                    if (!await saveSelect(App.LanguageOperate.GetLanguageValue("成功保存至")))
                     {
-                        await MessageBox.Show("已取消操作", "提示", Controls.@enum.MessageBoxButton.OK, Controls.@enum.MessageBoxImage.Information);
+                        await MessageBox.Show(App.LanguageOperate.GetLanguageValue("已取消操作"), App.LanguageOperate.GetLanguageValue("提示"), Controls.@enum.MessageBoxButton.OK, Controls.@enum.MessageBoxImage.Information);
                         return;
                     }
                 }
             }
 
-            if (!await saveSelect("新建成功"))
+            if (!await saveSelect(App.LanguageOperate.GetLanguageValue("新建成功")))
             {
-                await MessageBox.Show("已取消操作", "提示", Controls.@enum.MessageBoxButton.OK, Controls.@enum.MessageBoxImage.Information);
+                await MessageBox.Show(App.LanguageOperate.GetLanguageValue("已取消操作"), App.LanguageOperate.GetLanguageValue("提示"), Controls.@enum.MessageBoxButton.OK, Controls.@enum.MessageBoxImage.Information);
+                return;
             }
 
             EditText = string.Empty;
@@ -510,11 +792,11 @@ namespace Snet.Windows.KMSim
         /// <returns></returns>
         private async Task OpenAsync()
         {
-            FilePath = Win32Handler.Select("请选择文件", false, new() { { $"(*.ini)", $" *.ini" } });
+            FilePath = Win32Handler.Select(App.LanguageOperate.GetLanguageValue("请选择文件"), false, new() { { $"(*.ini)", $" *.ini" } });
             if (!FilePath.IsNullOrWhiteSpace())
             {
                 EditText = FileHandler.FileToString(FilePath);
-                await MessageBox.Show("打开成功", "提示", Controls.@enum.MessageBoxButton.OK, Controls.@enum.MessageBoxImage.Information);
+                await MessageBox.Show(App.LanguageOperate.GetLanguageValue("打开成功"), App.LanguageOperate.GetLanguageValue("提示"), Controls.@enum.MessageBoxButton.OK, Controls.@enum.MessageBoxImage.Information);
             }
         }
         /// <summary>
@@ -525,23 +807,23 @@ namespace Snet.Windows.KMSim
         {
             if (EditText.IsNullOrWhiteSpace() && FilePath.IsNullOrWhiteSpace())
             {
-                await MessageBox.Show("文件路径为空，请先新建", "提示", Controls.@enum.MessageBoxButton.OK, Controls.@enum.MessageBoxImage.Information);
+                await MessageBox.Show(App.LanguageOperate.GetLanguageValue("文件路径为空，请先新建"), App.LanguageOperate.GetLanguageValue("提示"), Controls.@enum.MessageBoxButton.OK, Controls.@enum.MessageBoxImage.Information);
                 return;
             }
 
             if (!EditText.IsNullOrWhiteSpace() && FilePath.IsNullOrWhiteSpace())
             {
-                if (await MessageBox.Show("检测到有输入，是否需要保存到文件？", "提示", Controls.@enum.MessageBoxButton.YesNo, Controls.@enum.MessageBoxImage.Question))
+                if (await MessageBox.Show(App.LanguageOperate.GetLanguageValue("检测到有输入，是否保存？"), App.LanguageOperate.GetLanguageValue("提示"), Controls.@enum.MessageBoxButton.YesNo, Controls.@enum.MessageBoxImage.Question))
                 {
-                    if (!await saveSelect("成功保存至"))
+                    if (!await saveSelect(App.LanguageOperate.GetLanguageValue("成功保存至")))
                     {
-                        await MessageBox.Show("已取消操作", "提示", Controls.@enum.MessageBoxButton.OK, Controls.@enum.MessageBoxImage.Information);
+                        await MessageBox.Show(App.LanguageOperate.GetLanguageValue("已取消操作"), App.LanguageOperate.GetLanguageValue("提示"), Controls.@enum.MessageBoxButton.OK, Controls.@enum.MessageBoxImage.Information);
                     }
                 }
                 return;
             }
-            FileHandler.StringToFile(FilePath, EditText);
-            await uiMessage.ShowAsync($"保存成功");
+            await CSAsync();
+            await uiMessage.ShowAsync(App.LanguageOperate.GetLanguageValue("保存成功"));
         }
         /// <summary>
         /// 关闭
@@ -556,23 +838,26 @@ namespace Snet.Windows.KMSim
 
             if (!EditText.IsNullOrWhiteSpace() && FilePath.IsNullOrWhiteSpace())
             {
-                if (await MessageBox.Show("检测到有输入，是否需要保存到文件？", "提示", Controls.@enum.MessageBoxButton.YesNo, Controls.@enum.MessageBoxImage.Question))
+                if (await MessageBox.Show(App.LanguageOperate.GetLanguageValue("检测到有输入，是否保存？"), App.LanguageOperate.GetLanguageValue("提示"), Controls.@enum.MessageBoxButton.YesNo, Controls.@enum.MessageBoxImage.Question))
                 {
-                    if (!await saveSelect("成功保存至"))
+                    if (!await saveSelect(App.LanguageOperate.GetLanguageValue("成功保存至")))
                     {
-                        await MessageBox.Show("已取消操作", "提示", Controls.@enum.MessageBoxButton.OK, Controls.@enum.MessageBoxImage.Information);
+                        await MessageBox.Show(App.LanguageOperate.GetLanguageValue("已取消操作"), App.LanguageOperate.GetLanguageValue("提示"), Controls.@enum.MessageBoxButton.OK, Controls.@enum.MessageBoxImage.Information);
+                        return;
                     }
                 }
             }
 
             if (!EditText.IsNullOrWhiteSpace() && !FilePath.IsNullOrWhiteSpace())
             {
-                FileHandler.StringToFile(FilePath, EditText);
+                await CSAsync();
+
+
             }
 
             EditText = string.Empty;
             FilePath = string.Empty;
-            await uiMessage.ShowAsync($"关闭成功");
+            await uiMessage.ShowAsync(App.LanguageOperate.GetLanguageValue("关闭成功"));
         }
 
         /// <summary>
@@ -581,17 +866,18 @@ namespace Snet.Windows.KMSim
         /// <returns></returns>
         private async Task<bool> saveSelect(string message)
         {
-            string path = Win32Handler.Select("请选择文件夹", true);
+            string path = Win32Handler.Select(App.LanguageOperate.GetLanguageValue("请选择文件夹"), true);
             if (!string.IsNullOrEmpty(path))
             {
                 string fileName = $"{App.LanguageOperate.GetLanguageValue("逻辑")}[{DateTime.Now.ToString("yyyyMMddHHmmss")}].ini";
                 FilePath = Path.Combine(path, fileName);
-                FileHandler.StringToFile(FilePath, EditText);
-                await MessageBox.Show($"{message}：{fileName}", "提示", Controls.@enum.MessageBoxButton.OK, Controls.@enum.MessageBoxImage.Information);
+                await CSAsync().ConfigureAwait(false);
+                await MessageBox.Show($"{message}：{fileName}", App.LanguageOperate.GetLanguageValue("提示"), Controls.@enum.MessageBoxButton.OK, Controls.@enum.MessageBoxImage.Information);
                 return true;
             }
             return false;
         }
+
         #endregion 文件操作
 
         #endregion 方法

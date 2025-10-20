@@ -8,11 +8,9 @@
 		<UseWPF>true</UseWPF>
 		<GenerateDocumentationFile>true</GenerateDocumentationFile>
 		<SatelliteResourceLanguages>zh-Hans;en</SatelliteResourceLanguages>
+		<PackageIcon>Icon.ico</PackageIcon>
+		<Version>2.0.2.5</Version>
 	</PropertyGroup>
-
-	<ItemGroup>
-		<None Remove="Icon.ico" />
-	</ItemGroup>
 
 	<ItemGroup>
 		<PackageReference Include="LibreHardwareMonitorLib" Version="0.9.4" />
@@ -37,6 +35,13 @@
 			<Generator>ResXFileCodeGenerator</Generator>
 			<LastGenOutput>Language.Designer.cs</LastGenOutput>
 		</EmbeddedResource>
+	</ItemGroup>
+
+	<ItemGroup>
+	  <None Update="Icon.ico">
+	    <Pack>True</Pack>
+	    <PackagePath>\</PackagePath>
+	  </None>
 	</ItemGroup>
 
 </Project>

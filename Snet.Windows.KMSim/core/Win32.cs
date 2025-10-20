@@ -193,6 +193,97 @@ namespace Snet.Windows.KMSim.core
         /// </summary>
         public const byte VK_OEM_102 = 0xE2;
 
+        // 特殊 Z 顺序值（用于 SetWindowPos 的 hWndInsertAfter 参数）
+        /// <summary>
+        /// 将窗口置于所有非顶层窗口的最前面（不一定置顶）
+        /// </summary>
+        public static readonly IntPtr HWND_TOP = new IntPtr(0);
+
+        /// <summary>
+        /// 将窗口置于所有窗口的最底层
+        /// </summary>
+        public static readonly IntPtr HWND_BOTTOM = new IntPtr(1);
+
+        /// <summary>
+        /// 将窗口置于所有顶层窗口的最前面（始终置顶）
+        /// </summary>
+        public static readonly IntPtr HWND_TOPMOST = new IntPtr(-1);
+
+        /// <summary>
+        /// 将窗口从顶层状态移除，但保持在非顶层窗口之上
+        /// </summary>
+        public static readonly IntPtr HWND_NOTOPMOST = new IntPtr(-2);
+
+        // SWP 标志（用于 SetWindowPos 的 Flags 参数）
+        /// <summary>保留窗口当前大小，不改变</summary>
+        public const uint SWP_NOSIZE = 0x0001;
+
+        /// <summary>保留窗口当前坐标位置，不移动</summary>
+        public const uint SWP_NOMOVE = 0x0002;
+
+        /// <summary>不改变窗口的 Z 顺序</summary>
+        public const uint SWP_NOZORDER = 0x0004;
+
+        /// <summary>不重绘窗口</summary>
+        public const uint SWP_NOREDRAW = 0x0008;
+
+        /// <summary>窗口被置于非激活状态</summary>
+        public const uint SWP_NOACTIVATE = 0x0010;
+
+        /// <summary>强制应用窗口的新的边框样式（如修改了 WS_BORDER）</summary>
+        public const uint SWP_FRAMECHANGED = 0x0020;
+
+        /// <summary>显示窗口（如果之前隐藏）</summary>
+        public const uint SWP_SHOWWINDOW = 0x0040;
+
+        /// <summary>隐藏窗口</summary>
+        public const uint SWP_HIDEWINDOW = 0x0080;
+
+        /// <summary>丢弃原窗口图像，不保留之前内容</summary>
+        public const uint SWP_NOCOPYBITS = 0x0100;
+
+        /// <summary>不改变所有者窗口的 Z 顺序</summary>
+        public const uint SWP_NOOWNERZORDER = 0x0200;
+
+        /// <summary>不发送 WM_WINDOWPOSCHANGING 消息</summary>
+        public const uint SWP_NOSENDCHANGING = 0x0400;
+
+        /// <summary>与 SWP_FRAMECHANGED 相同，用于兼容旧代码</summary>
+        public const uint SWP_DRAWFRAME = SWP_FRAMECHANGED;
+
+        /// <summary>与 SWP_NOOWNERZORDER 相同，用于兼容旧代码</summary>
+        public const uint SWP_NOREPOSITION = SWP_NOOWNERZORDER;
+
+        /// <summary>延迟擦除窗口背景</summary>
+        public const uint SWP_DEFERERASE = 0x2000;
+
+        /// <summary>异步窗口位置操作，不等待系统处理完再返回</summary>
+        public const uint SWP_ASYNCWINDOWPOS = 0x4000;
+
+        /// <summary>
+        /// 获取窗体的宽高
+        /// </summary>
+        /// <param name="hWnd">句柄</param>
+        /// <param name="lpRect">矩形对象</param>
+        /// <returns></returns>
+        [DllImport("user32.dll", SetLastError = true)]
+        private static extern bool GetWindowRect(IntPtr hWnd, out RECT lpRect);
+
+        /// <summary>
+        /// 获取窗口宽高
+        /// </summary>
+        /// <param name="hWnd">句柄</param>
+        /// <returns>宽,高</returns>
+        public static (int Width, int Height) GetWindowSize(IntPtr hWnd)
+        {
+            if (GetWindowRect(hWnd, out RECT rect))
+            {
+                int width = (int)(rect.Right - rect.Left);
+                int height = (int)(rect.Bottom - rect.Top);
+                return (width, height);
+            }
+            return (0, 0);
+        }
 
         /// <summary>
         /// 设置鼠标位置到指定屏幕坐标
@@ -207,7 +298,7 @@ namespace Snet.Windows.KMSim.core
         /// 设置目标窗体在屏幕上的位置与 Z 顺序
         /// </summary>
         /// <param name="hWnd">目标窗口句柄</param>
-        /// <param name="hWndlnsertAfter">在此窗口之后插入（可控制置顶/置底）</param>
+        /// <param name="hWndInsertAfter">在此窗口之后插入（可控制置顶/置底）</param>
         /// <param name="X">新位置 X 坐标</param>
         /// <param name="Y">新位置 Y 坐标</param>
         /// <param name="cx">新宽度</param>
@@ -215,7 +306,7 @@ namespace Snet.Windows.KMSim.core
         /// <param name="Flags">窗口位置更新标志（SWP 常量组合）</param>
         /// <returns>操作结果：true 成功，false 失败</returns>
         [DllImport("user32.dll")]
-        public static extern bool SetWindowPos(IntPtr hWnd, int hWndlnsertAfter, int X, int Y, int cx, int cy, uint Flags);
+        public static extern bool SetWindowPos(IntPtr hWnd, IntPtr hWndInsertAfter, int X, int Y, int cx, int cy, uint Flags);
 
         /// <summary>
         /// 模拟鼠标事件
@@ -368,5 +459,35 @@ namespace Snet.Windows.KMSim.core
         /// </remarks>
         [DllImport("user32.dll")]
         public static extern bool IsWindowVisible(IntPtr hWnd);
+
+        /// <summary>
+        /// 枚举指定父窗口的所有子窗口。
+        /// </summary>
+        /// <param name="hWnd">
+        /// 父窗口句柄。  
+        /// 如果传入顶层窗口句柄，则枚举该窗口下的所有子窗口。  
+        /// 如果传入 IntPtr.Zero，则枚举桌面下所有顶层窗口（通常不这么用）。
+        /// </param>
+        /// <param name="lpEnumFunc">
+        /// 回调函数，每找到一个子窗口都会调用该函数一次。  
+        /// 返回 true 表示继续枚举，返回 false 表示停止枚举。  
+        /// 委托定义如下：
+        ///     delegate bool EnumWindowsProc(IntPtr hWnd, IntPtr lParam);
+        /// 其中 hWnd 为当前子窗口句柄，lParam 为用户自定义参数。
+        /// </param>
+        /// <param name="lParam">
+        /// 用户自定义参数，会原样传入回调函数。可以用来传递状态、对象引用等。
+        /// </param>
+        /// <returns>
+        /// 如果函数成功，则返回 true；如果失败，则返回 false。可使用 Marshal.GetLastWin32Error() 获取错误码。
+        /// </returns>
+        /// <remarks>
+        /// - 此函数不会枚举隐藏的或不可见窗口，除非通过回调自己处理。  
+        /// - 常用于获取浏览器、Electron 或 WPF 嵌套窗口的子窗口句柄。  
+        /// - 回调中不要执行耗时操作，否则可能影响枚举性能。  
+        /// - 调用此函数需要引用 System.Runtime.InteropServices。
+        /// </remarks>
+        [DllImport("user32.dll")]
+        public static extern bool EnumChildWindows(IntPtr hWnd, EnumWindowsProc lpEnumFunc, IntPtr lParam);
     }
 }

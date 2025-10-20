@@ -70,11 +70,47 @@ namespace Snet.Windows.KMSim {
         }
         
         /// <summary>
+        ///   查找类似 不存在 的本地化字符串。
+        /// </summary>
+        internal static string 不存在 {
+            get {
+                return ResourceManager.GetString("不存在", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 不支持的图像文件格式 的本地化字符串。
+        /// </summary>
+        internal static string 不支持的图像文件格式 {
+            get {
+                return ResourceManager.GetString("不支持的图像文件格式", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   查找类似 保存 的本地化字符串。
         /// </summary>
         internal static string 保存 {
             get {
                 return ResourceManager.GetString("保存", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 保存图片 的本地化字符串。
+        /// </summary>
+        internal static string 保存图片 {
+            get {
+                return ResourceManager.GetString("保存图片", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 保存成功 的本地化字符串。
+        /// </summary>
+        internal static string 保存成功 {
+            get {
+                return ResourceManager.GetString("保存成功", resourceCulture);
             }
         }
         
@@ -88,7 +124,7 @@ namespace Snet.Windows.KMSim {
         }
         
         /// <summary>
-        ///   查找类似 停止 的本地化字符串。
+        ///   查找类似 停止 F11 的本地化字符串。
         /// </summary>
         internal static string 停止 {
             get {
@@ -115,6 +151,33 @@ namespace Snet.Windows.KMSim {
         }
         
         /// <summary>
+        ///   查找类似 关闭成功 的本地化字符串。
+        /// </summary>
+        internal static string 关闭成功 {
+            get {
+                return ResourceManager.GetString("关闭成功", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 出错 的本地化字符串。
+        /// </summary>
+        internal static string 出错 {
+            get {
+                return ResourceManager.GetString("出错", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 原始数据 的本地化字符串。
+        /// </summary>
+        internal static string 原始数据 {
+            get {
+                return ResourceManager.GetString("原始数据", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   查找类似 命令 的本地化字符串。
         /// </summary>
         internal static string 命令 {
@@ -133,6 +196,60 @@ namespace Snet.Windows.KMSim {
         }
         
         /// <summary>
+        ///   查找类似 图像保存失败 的本地化字符串。
+        /// </summary>
+        internal static string 图像保存失败 {
+            get {
+                return ResourceManager.GetString("图像保存失败", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 复制图片 的本地化字符串。
+        /// </summary>
+        internal static string 复制图片 {
+            get {
+                return ResourceManager.GetString("复制图片", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 已保存至 的本地化字符串。
+        /// </summary>
+        internal static string 已保存至 {
+            get {
+                return ResourceManager.GetString("已保存至", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 已取消 的本地化字符串。
+        /// </summary>
+        internal static string 已取消 {
+            get {
+                return ResourceManager.GetString("已取消", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 已取消操作 的本地化字符串。
+        /// </summary>
+        internal static string 已取消操作 {
+            get {
+                return ResourceManager.GetString("已取消操作", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 已存在 的本地化字符串。
+        /// </summary>
+        internal static string 已存在 {
+            get {
+                return ResourceManager.GetString("已存在", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   查找类似 帮助 的本地化字符串。
         /// </summary>
         internal static string 帮助 {
@@ -142,11 +259,38 @@ namespace Snet.Windows.KMSim {
         }
         
         /// <summary>
-        ///   查找类似 开始 的本地化字符串。
+        ///   查找类似 开始 F10 的本地化字符串。
         /// </summary>
         internal static string 开始 {
             get {
                 return ResourceManager.GetString("开始", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 异常 的本地化字符串。
+        /// </summary>
+        internal static string 异常 {
+            get {
+                return ResourceManager.GetString("异常", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 成功 的本地化字符串。
+        /// </summary>
+        internal static string 成功 {
+            get {
+                return ResourceManager.GetString("成功", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 成功保存至 的本地化字符串。
+        /// </summary>
+        internal static string 成功保存至 {
+            get {
+                return ResourceManager.GetString("成功保存至", resourceCulture);
             }
         }
         
@@ -156,6 +300,42 @@ namespace Snet.Windows.KMSim {
         internal static string 打开 {
             get {
                 return ResourceManager.GetString("打开", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 打开成功 的本地化字符串。
+        /// </summary>
+        internal static string 打开成功 {
+            get {
+                return ResourceManager.GetString("打开成功", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 执行 的本地化字符串。
+        /// </summary>
+        internal static string 执行 {
+            get {
+                return ResourceManager.GetString("执行", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 描述 的本地化字符串。
+        /// </summary>
+        internal static string 描述 {
+            get {
+                return ResourceManager.GetString("描述", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 提示 的本地化字符串。
+        /// </summary>
+        internal static string 提示 {
+            get {
+                return ResourceManager.GetString("提示", resourceCulture);
             }
         }
         
@@ -174,6 +354,69 @@ namespace Snet.Windows.KMSim {
         internal static string 新建 {
             get {
                 return ResourceManager.GetString("新建", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 新建成功 的本地化字符串。
+        /// </summary>
+        internal static string 新建成功 {
+            get {
+                return ResourceManager.GetString("新建成功", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 方法 的本地化字符串。
+        /// </summary>
+        internal static string 方法 {
+            get {
+                return ResourceManager.GetString("方法", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 无法将 的本地化字符串。
+        /// </summary>
+        internal static string 无法将 {
+            get {
+                return ResourceManager.GetString("无法将", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 未找到可匹配的重载方法 的本地化字符串。
+        /// </summary>
+        internal static string 未找到可匹配的重载方法 {
+            get {
+                return ResourceManager.GetString("未找到可匹配的重载方法", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 查找 的本地化字符串。
+        /// </summary>
+        internal static string 查找 {
+            get {
+                return ResourceManager.GetString("查找", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 流程已停止 的本地化字符串。
+        /// </summary>
+        internal static string 流程已停止 {
+            get {
+                return ResourceManager.GetString("流程已停止", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 流程异常 的本地化字符串。
+        /// </summary>
+        internal static string 流程异常 {
+            get {
+                return ResourceManager.GetString("流程异常", resourceCulture);
             }
         }
         
@@ -205,6 +448,60 @@ namespace Snet.Windows.KMSim {
         }
         
         /// <summary>
+        ///   查找类似 线条操作 的本地化字符串。
+        /// </summary>
+        internal static string 线条操作 {
+            get {
+                return ResourceManager.GetString("线条操作", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 详情 的本地化字符串。
+        /// </summary>
+        internal static string 详情 {
+            get {
+                return ResourceManager.GetString("详情", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 请选择文件夹 的本地化字符串。
+        /// </summary>
+        internal static string 请选择文件夹 {
+            get {
+                return ResourceManager.GetString("请选择文件夹", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 调整 的本地化字符串。
+        /// </summary>
+        internal static string 调整 {
+            get {
+                return ResourceManager.GetString("调整", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 转换为 的本地化字符串。
+        /// </summary>
+        internal static string 转换为 {
+            get {
+                return ResourceManager.GetString("转换为", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 返回 的本地化字符串。
+        /// </summary>
+        internal static string 返回 {
+            get {
+                return ResourceManager.GetString("返回", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   查找类似 退出 的本地化字符串。
         /// </summary>
         internal static string 退出 {
@@ -223,7 +520,16 @@ namespace Snet.Windows.KMSim {
         }
         
         /// <summary>
-        ///   查找类似 重试 的本地化字符串。
+        ///   查找类似 重置 的本地化字符串。
+        /// </summary>
+        internal static string 重置 {
+            get {
+                return ResourceManager.GetString("重置", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   查找类似 重试 F12 的本地化字符串。
         /// </summary>
         internal static string 重试 {
             get {

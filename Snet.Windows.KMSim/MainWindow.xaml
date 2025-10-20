@@ -90,7 +90,7 @@
                 Header="{x:Null}"
                 Icon="{uis:SymbolIcon Symbol=Play20,
                                       Filled=True}"
-                InputGestureText="F1"
+                InputGestureText="CTRL+F10"
                 ToolTip="{snet:Loc 开始}" />
             <uis:MenuItem
                 Command="{Binding Stop}"
@@ -98,7 +98,7 @@
                 Header="{x:Null}"
                 Icon="{uis:SymbolIcon Symbol=Stop20,
                                       Filled=True}"
-                InputGestureText="F2"
+                InputGestureText="CTRL+F11"
                 ToolTip="{snet:Loc 停止}" />
             <uis:MenuItem
                 Command="{Binding Retry}"
@@ -106,7 +106,7 @@
                 Header="{x:Null}"
                 Icon="{uis:SymbolIcon Symbol=ArrowClockwise20,
                                       Filled=True}"
-                InputGestureText="F3"
+                InputGestureText="CTRL+F12"
                 ToolTip="{snet:Loc 重试}" />
             <uis:MenuItem Header="{snet:Loc 帮助}" Icon="{uis:SymbolIcon Symbol=ChatHelp20, Filled=True}">
                 <uis:MenuItem

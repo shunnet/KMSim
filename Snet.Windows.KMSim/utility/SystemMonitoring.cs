@@ -5,26 +5,18 @@ using System.Security.Principal;
 
 namespace Snet.Windows.KMSim.utility
 {
+    /// <summary>
+    /// 系统监控器
+    /// </summary>
     public class SystemMonitoring
     {
+
+        private static readonly Lazy<SystemMonitoring> _instance = new(() => new SystemMonitoring(), true);
         /// <summary>
         /// 获取当前对象（单例模式）
         /// </summary>
         /// <returns></returns>
-        public static SystemMonitoring Instance()
-        {
-            if (instance == null)
-            {
-                lock (Lock)
-                {
-                    instance = new SystemMonitoring();
-                }
-            }
-            return instance;
-        }
-
-        private static SystemMonitoring instance;
-        private static readonly object Lock = new object();  //锁
+        public static SystemMonitoring Instance() => _instance.Value;
         private Computer computer;
         private UpdateVisitor updateVisitor = new UpdateVisitor();
 
@@ -34,22 +26,19 @@ namespace Snet.Windows.KMSim.utility
         public class SensorDataType
         {
             public string Key { get; set; }
-            public string Vlaue { get; set; }
+            public string Value { get; set; }
         }
 
         /// <summary>
         /// 硬件信息类型
         /// </summary>
-        public class HardwareDataType
+        public class HardwareDataType : SensorDataType
         {
             public HardwareDataType()
             {
-                Vlaues = new List<SensorDataType>();
+                Values = new List<SensorDataType>();
             }
-
-            public string Key { get; set; }
-            public string Vlaue { get; set; }
-            public List<SensorDataType> Vlaues { get; set; }
+            public List<SensorDataType> Values { get; set; }
         }
 
         /// <summary>
@@ -81,6 +70,31 @@ namespace Snet.Windows.KMSim.utility
             /// 系统运行时间
             /// </summary>
             public string SystemRunTime { get; set; }
+
+            /// <summary>
+            /// 处理器信息
+            /// </summary>
+            public string CpuInfo { get; set; } = string.Empty;
+            /// <summary>
+            /// 内存信息
+            /// </summary>
+            public string MemoryInfo { get; set; } = string.Empty;
+            /// <summary>
+            /// 硬盘信息
+            /// </summary>
+            public string DiskInfo { get; set; } = string.Empty;
+            /// <summary>
+            /// 显卡信息
+            /// </summary>
+            public string GpuInfo { get; set; } = string.Empty;
+            /// <summary>
+            /// bios信息
+            /// </summary>
+            public string BiosInfo { get; set; } = string.Empty;
+            /// <summary>
+            /// 网络信息
+            /// </summary>
+            public string NetworkInfo { get; set; } = string.Empty;
         }
 
         /// <summary>
@@ -124,23 +138,32 @@ namespace Snet.Windows.KMSim.utility
         /// <summary>
         /// 硬件数据获取
         /// </summary>
-        public HardwareData GetInfo()
+        public HardwareData GetInfo(bool baseInfo = false)
         {
             computer.Accept(updateVisitor);
             HardwareData hardwareData = new HardwareData();
-            hardwareData.SystemName = GetSystemName();
-            hardwareData.SystemVer = GetSystemVer();
-            hardwareData.SystemRunTime = GetSystemRunTime();
-
+            if (baseInfo)
+            {
+                Task.WaitAll(
+                    Task.Run(() => hardwareData.SystemName = GetSystemName()),
+                        Task.Run(() => hardwareData.SystemVer = GetSystemVer()),
+                        Task.Run(() => hardwareData.SystemRunTime = GetSystemRunTime()),
+                        Task.Run(() => hardwareData.CpuInfo = GetCpuInfo()),
+                        Task.Run(() => hardwareData.MemoryInfo = GetMemoryInfo()),
+                        Task.Run(() => hardwareData.DiskInfo = GetDiskInfo()),
+                        Task.Run(() => hardwareData.GpuInfo = GetGpuInfo()),
+                        Task.Run(() => hardwareData.BiosInfo = GetBiosInfo()),
+                        Task.Run(() => hardwareData.NetworkInfo = GetNetworkInfo()));
+            }
             foreach (IHardware hardware in computer.Hardware)  //硬件
             {
-                HardwareDataType hardwareDataType = new HardwareDataType() { Key = GetHardwareNameCn(hardware), Vlaue = hardware.Name };
+                HardwareDataType hardwareDataType = new HardwareDataType() { Key = GetHardwareNameCn(hardware), Value = hardware.Name };
                 for (int i = 0; i < hardware.Sensors.Length; i++)
                 {
-                    string SensorsNameCn = GetSensorsNameCn(hardware, i);
+                    string SensorsNameCn = GetSensorsNameCn(hardware.Sensors[i].SensorType);
                     if (!string.IsNullOrEmpty(hardware.Sensors[i].Value.ToString()))
                     {
-                        hardwareDataType.Vlaues.Add(new SensorDataType() { Key = $"{SensorsNameCn},{hardware.Sensors[i].Name}", Vlaue = hardware.Sensors[i].Value.ToString() });
+                        hardwareDataType.Values.Add(new SensorDataType() { Key = $"{SensorsNameCn},{hardware.Sensors[i].Name}", Value = hardware.Sensors[i].Value.ToString() });
                     }
                 }
                 hardwareData.Info.Add(hardwareDataType);
@@ -154,24 +177,88 @@ namespace Snet.Windows.KMSim.utility
         /// <returns></returns>
         private string GetSystemVer()
         {
-            string result = string.Empty;
-            ManagementObjectSearcher searcher = new ManagementObjectSearcher("SELECT Caption FROM Win32_OperatingSystem");
-            foreach (ManagementObject os in searcher.Get())
+            try
             {
-                result = os["Caption"].ToString();
-                break;
+                using var searcher = new ManagementObjectSearcher("SELECT Caption FROM Win32_OperatingSystem");
+                foreach (var os in searcher.Get().Cast<ManagementObject>())
+                    return os["Caption"]?.ToString() ?? "未知系统";
             }
-            return result;
+            catch { }
+            return "未知系统";
+        }
+        private string GetCpuInfo()
+        {
+            try
+            {
+                using var searcher = new ManagementObjectSearcher("SELECT Name,NumberOfCores,NumberOfLogicalProcessors FROM Win32_Processor");
+                var info = searcher.Get().Cast<ManagementObject>().FirstOrDefault();
+                return info == null ? "未知CPU" : $"{info["Name"]} / {info["NumberOfCores"]}核{info["NumberOfLogicalProcessors"]}线程";
+            }
+            catch { return "未知CPU"; }
+        }
+
+        private string GetMemoryInfo()
+        {
+            try
+            {
+                using var searcher = new ManagementObjectSearcher("SELECT Capacity FROM Win32_PhysicalMemory");
+                var total = searcher.Get().Cast<ManagementObject>().Sum(m => Convert.ToInt64(m["Capacity"]));
+                return $"{Math.Round(total / 1024.0 / 1024 / 1024, 1)} GB";
+            }
+            catch { return "未知内存"; }
+        }
+
+        private string GetDiskInfo()
+        {
+            try
+            {
+                using var searcher = new ManagementObjectSearcher("SELECT Model,Size FROM Win32_DiskDrive");
+                return string.Join("；", searcher.Get().Cast<ManagementObject>().Select(m =>
+                {
+                    var size = Convert.ToInt64(m["Size"]) / 1024.0 / 1024 / 1024;
+                    return $"{m["Model"]} ({Math.Round(size, 1)} GB)";
+                }));
+            }
+            catch { return "未知硬盘"; }
+        }
+
+        private string GetGpuInfo()
+        {
+            try
+            {
+                using var searcher = new ManagementObjectSearcher("SELECT Name,DriverVersion FROM Win32_VideoController");
+                return string.Join("；", searcher.Get().Cast<ManagementObject>().Select(m => $"{m["Name"]} / 驱动 {m["DriverVersion"]}"));
+            }
+            catch { return "未知显卡"; }
+        }
+
+        private string GetBiosInfo()
+        {
+            try
+            {
+                using var searcher = new ManagementObjectSearcher("SELECT Manufacturer,SMBIOSBIOSVersion,ReleaseDate FROM Win32_BIOS");
+                var info = searcher.Get().Cast<ManagementObject>().FirstOrDefault();
+                if (info == null) return "未知BIOS";
+                return $"{info["Manufacturer"]} {info["SMBIOSBIOSVersion"]} ({info["ReleaseDate"]?.ToString()?.Substring(0, 8)})";
+            }
+            catch { return "未知BIOS"; }
+        }
+
+        private string GetNetworkInfo()
+        {
+            try
+            {
+                using var searcher = new ManagementObjectSearcher("SELECT Name,MACAddress FROM Win32_NetworkAdapter WHERE MACAddress IS NOT NULL");
+                return string.Join("；", searcher.Get().Cast<ManagementObject>().Select(m => $"{m["Name"]} [{m["MACAddress"]}]"));
+            }
+            catch { return "未知网络"; }
         }
 
         /// <summary>
         /// 获取系统名称
         /// </summary>
         /// <returns></returns>
-        private string GetSystemName()
-        {
-            return System.Environment.GetEnvironmentVariable("ComputerName");
-        }
+        private string GetSystemName() => Environment.MachineName;
 
         /// <summary>
         /// 获取系统运行时间
@@ -179,216 +266,88 @@ namespace Snet.Windows.KMSim.utility
         /// <returns></returns>
         private string GetSystemRunTime()
         {
-            int minutes = (Environment.TickCount / 0x3e8) / 60;
-            int day = (int)Math.Floor(Convert.ToDouble(minutes / 1440));
-            int hour = day > 0 ? (int)Math.Floor(Convert.ToDouble((minutes - day * 1440) / 60)) : (int)Math.Floor(Convert.ToDouble(minutes / 60));
-            int minute = hour > 0 ? minutes - day * 1440 - hour * 60 : minutes;
-            string time = string.Empty;
-            if (day > 0)
-                time += day + "天";
-            if (hour > 0)
-                time += hour + "小时";
-            if (minute > 0)
-                time += minute + "分钟";
-            return time;
+            var uptime = TimeSpan.FromMilliseconds(Environment.TickCount64);
+            return $"{(int)uptime.TotalDays}天{uptime.Hours}小时{uptime.Minutes}分钟";
         }
-
         /// <summary>
         /// 获取硬件名称
         /// </summary>
         /// <returns></returns>
-        private string GetHardwareNameCn(IHardware hardware)
+        private string GetHardwareNameCn(IHardware hardware) => hardware.HardwareType switch
         {
-            string HardwareNameCn = string.Empty;
-            switch (hardware.HardwareType)
-            {
-                case HardwareType.Motherboard:  //主板
-                    HardwareNameCn = "主板";
-                    break;
-
-                case HardwareType.SuperIO: //IO芯片
-                    HardwareNameCn = "IO芯片";
-                    break;
-
-                case HardwareType.Cpu: //处理器
-                    HardwareNameCn = "处理器";
-                    break;
-
-                case HardwareType.Memory:  //内存
-                    HardwareNameCn = "内存";
-                    break;
-
-                case HardwareType.GpuNvidia: //英伟达显卡
-                    HardwareNameCn = "英伟达显卡";
-                    break;
-
-                case HardwareType.GpuAmd:  //AMD显卡
-                    HardwareNameCn = "AMD显卡";
-                    break;
-
-                case HardwareType.GpuIntel: //英特尔显卡
-                    HardwareNameCn = "因特尔显卡";
-                    break;
-
-                case HardwareType.Storage: //硬盘
-                    HardwareNameCn = "硬盘";
-                    break;
-
-                case HardwareType.Network:  //网络
-                    HardwareNameCn = "网络";
-                    break;
-
-                case HardwareType.Cooler:  //散热器
-                    HardwareNameCn = "散热器";
-                    break;
-
-                case HardwareType.EmbeddedController: //嵌入式控制器
-                    HardwareNameCn = "嵌入式控制器";
-                    break;
-
-                case HardwareType.Psu: //电源
-                    HardwareNameCn = "电源";
-                    break;
-
-                case HardwareType.Battery: //电池
-                    HardwareNameCn = "电池";
-                    break;
-            }
-            return HardwareNameCn;
-        }
-
+            HardwareType.Motherboard => "主板",
+            HardwareType.SuperIO => "IO芯片",
+            HardwareType.Cpu => "处理器",
+            HardwareType.Memory => "内存",
+            HardwareType.GpuNvidia => "英伟达显卡",
+            HardwareType.GpuAmd => "AMD显卡",
+            HardwareType.GpuIntel => "英特尔显卡",
+            HardwareType.Storage => "硬盘",
+            HardwareType.Network => "网络",
+            HardwareType.Cooler => "散热器",
+            HardwareType.EmbeddedController => "嵌入式控制器",
+            HardwareType.Psu => "电源",
+            HardwareType.Battery => "电池",
+            _ => "未知硬件"
+        };
         /// <summary>
         /// 获取传感器名称
         /// </summary>
         /// <returns></returns>
-        private string GetSensorsNameCn(IHardware hardware, int i)
+        private string GetSensorsNameCn(SensorType type) => type switch
         {
-            string SensorsNameCn = string.Empty;
-            switch (hardware.Sensors[i].SensorType)
-            {
-                case SensorType.Voltage: //电压
-                    SensorsNameCn = "电压";
-                    break;
+            SensorType.Voltage => "电压",
+            SensorType.Current => "电流",
+            SensorType.Power => "功率",
+            SensorType.Clock => "时钟",
+            SensorType.Temperature => "温度",
+            SensorType.Load => "负载",
+            SensorType.Frequency => "频率",
+            SensorType.Fan => "风扇转速",
+            SensorType.Flow => "流量",
+            SensorType.Control => "控制器",
+            SensorType.Level => "电平",
+            SensorType.Factor => "系数",
+            SensorType.Data => "数据区",
+            SensorType.SmallData => "小数据",
+            SensorType.Throughput => "吞吐量",
+            SensorType.TimeSpan => "时间间隔",
+            SensorType.Energy => "能耗",
+            SensorType.Noise => "噪声",
+            SensorType.Conductivity => "电导率",
+            SensorType.Humidity => "湿度",
+            _ => "未知传感器"
+        };
 
-                case SensorType.Current:  //电流
-                    SensorsNameCn = "电流";
-                    break;
-
-                case SensorType.Power://功率
-                    SensorsNameCn = "功率";
-                    break;
-
-                case SensorType.Clock: //运行时间
-                    SensorsNameCn = "运行时间";
-                    break;
-
-                case SensorType.Temperature:  //温度
-                    SensorsNameCn = "温度";
-                    break;
-
-                case SensorType.Load: //负载
-                    SensorsNameCn = "负载";
-                    break;
-
-                case SensorType.Frequency:  //频率
-                    SensorsNameCn = "频率";
-                    break;
-
-                case SensorType.Fan: //风扇转速
-                    SensorsNameCn = "风扇转速";
-                    break;
-
-                case SensorType.Flow: //流量
-                    SensorsNameCn = "流量";
-                    break;
-
-                case SensorType.Control:  //控制器
-                    SensorsNameCn = "控制器";
-                    break;
-
-                case SensorType.Level:  //电频
-                    SensorsNameCn = "电频";
-                    break;
-
-                case SensorType.Factor: //系数
-                    SensorsNameCn = "系数";
-                    break;
-
-                case SensorType.Data: //数据区
-                    SensorsNameCn = "数据区";
-                    break;
-
-                case SensorType.SmallData: //内存卡
-                    SensorsNameCn = "内存卡";
-                    break;
-
-                case SensorType.Throughput:  //吞吐量
-                    SensorsNameCn = "吞吐量";
-                    break;
-
-                case SensorType.TimeSpan: //时间间隔
-                    SensorsNameCn = "时间间隔";
-                    break;
-
-                case SensorType.Energy:  //动力
-                    SensorsNameCn = "动力";
-                    break;
-
-                case SensorType.Noise:  //噪声
-                    SensorsNameCn = "噪声";
-                    break;
-            }
-            return SensorsNameCn;
-        }
-
-        private class UpdateVisitor : IVisitor
+        private sealed class UpdateVisitor : IVisitor
         {
-            public void VisitComputer(IComputer computer)
-            {
-                computer.Traverse(this);
-            }
-
+            public void VisitComputer(IComputer computer) => computer.Traverse(this);
             public void VisitHardware(IHardware hardware)
             {
                 hardware.Update();
-                foreach (IHardware subHardware in hardware.SubHardware) subHardware.Accept(this);
+                foreach (var sub in hardware.SubHardware) sub.Accept(this);
             }
-
-            public void VisitSensor(ISensor sensor)
-            { }
-
-            public void VisitParameter(IParameter parameter)
-            { }
+            public void VisitSensor(ISensor sensor) { }
+            public void VisitParameter(IParameter parameter) { }
         }
 
         /// <summary>
-        /// 判断程序是否是以管理员身份运行。
+        /// 判断当前程序是否以管理员身份运行<br/>
         /// </summary>
-        public static bool IsAdmin()
+        public bool IsAdmin()
         {
-            WindowsIdentity id = WindowsIdentity.GetCurrent();
-            WindowsPrincipal principal = new WindowsPrincipal(id);
+            using var id = WindowsIdentity.GetCurrent();
+            var principal = new WindowsPrincipal(id);
             return principal.IsInRole(WindowsBuiltInRole.Administrator);
         }
 
         /// <summary>
-        /// 检测程序是否重复多开
+        /// 检测程序是否已经存在多开<br/>
         /// </summary>
-        public static bool IsOpen()
+        public bool IsOpen()
         {
-            Process currentProcess = Process.GetCurrentProcess();
-            var runningProcess = (from process in Process.GetProcesses()
-                                  where
-                                    process.Id != currentProcess.Id &&
-                                    process.ProcessName.Equals(
-                                      currentProcess.ProcessName,
-                                      StringComparison.Ordinal)
-                                  select process).FirstOrDefault();
-            if (runningProcess != null)
-            {
-                return true;
-            }
-            return false;
+            var current = Process.GetCurrentProcess();
+            return Process.GetProcessesByName(current.ProcessName).Any(p => p.Id != current.Id);
         }
     }
 }

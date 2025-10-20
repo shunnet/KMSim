@@ -2,8 +2,12 @@
 using Snet.Core.handler;
 using Snet.Log;
 using Snet.Model.data;
+using Snet.Windows.Controls.data;
 using Snet.Windows.Core.handler;
+using Snet.Windows.KMSim.core;
+using Snet.Windows.KMSim.handler;
 using Snet.Windows.KMSim.utility;
+using System.Reflection;
 using System.Windows;
 
 namespace Snet.Windows.KMSim
@@ -17,6 +21,57 @@ namespace Snet.Windows.KMSim
         /// 语言操作
         /// </summary>
         public readonly static LanguageModel LanguageOperate = new LanguageModel("Snet.Windows.KMSim", "Language", "Snet.Windows.KMSim.dll");
+
+        /// <summary>
+        /// 搜索的方式
+        /// </summary>
+        public readonly static BindingFlags BindingAttr = BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly;
+
+        /// <summary>
+        /// 键鼠模拟核心
+        /// </summary>
+        public readonly static KMSimCore KMSimCore = new KMSimCore();
+
+        /// <summary>
+        /// 编辑框模型集合
+        /// </summary>
+        public readonly static List<EditModel> EditModels = GetEditModels();
+
+        /// <summary>
+        /// 获取编辑框模型集合
+        /// </summary>
+        /// <returns></returns>
+        private static List<EditModel> GetEditModels()
+        {
+            List<EditModel> models = new List<EditModel>();
+            models.Add(new EditModel
+            {
+                Name = "=",
+                Color = "#FF0000",
+                Description = "命令与数据分隔符"
+            });
+            models.Add(new EditModel
+            {
+                Name = "‹",
+                Color = "#D8A50F",
+                Description = "嵌套数据使用的左括号"
+            });
+            models.Add(new EditModel
+            {
+                Name = "›",
+                Color = "#D8A50F",
+                Description = "嵌套数据使用的右括号"
+            });
+            models.Add(new EditModel
+            {
+                Name = "While",
+                Color = "#27A5F7",
+                Description = "流程循环多少次\r\n( true 为一直循环执行且为异步，支持多组 While ‹ Int32|Bool › )"
+            });
+            models.AddRange(KMSimCore.GetType().Get("Snet.Windows.KMSim.xml", "#27A5F7"));
+
+            return models;
+        }
 
         /// <summary>
         /// 在应用程序关闭时发生

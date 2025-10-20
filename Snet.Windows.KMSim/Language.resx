@@ -98,13 +98,13 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=2.0.3500.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <data name="开始" xml:space="preserve">
-    <value>开始</value>
+    <value>开始 F10</value>
   </data>
   <data name="停止" xml:space="preserve">
-    <value>停止</value>
+    <value>停止 F11</value>
   </data>
   <data name="重试" xml:space="preserve">
-    <value>重试</value>
+    <value>重试 F12</value>
   </data>
   <data name="命令" xml:space="preserve">
     <value>命令</value>
@@ -153,5 +153,116 @@
   </data>
   <data name="命令查找窗口" xml:space="preserve">
     <value>[ Shunnet.top ] Windows 键鼠模拟工具 - 命令查找窗口</value>
+  </data>
+  <data name="查找" xml:space="preserve">
+    <value>查找</value>
+  </data>
+  <data name="描述" xml:space="preserve">
+    <value>描述</value>
+  </data>
+  <data name="详情" xml:space="preserve">
+    <value>详情</value>
+  </data>
+  <data name="原始数据" xml:space="preserve">
+    <value>原始数据</value>
+  </data>
+  <data name="方法" xml:space="preserve">
+    <value>方法</value>
+  </data>
+  <data name="提示" xml:space="preserve">
+    <value>提示</value>
+  </data>
+  <data name="已取消操作" xml:space="preserve">
+    <value>已取消操作</value>
+  </data>
+  <data name="成功保存至" xml:space="preserve">
+    <value>成功保存至</value>
+  </data>
+  <data name="检测到有输入，是否保存？" xml:space="preserve">
+    <value>检测到有输入，是否保存？</value>
+  </data>
+  <data name="请选择文件夹" xml:space="preserve">
+    <value>请选择文件夹</value>
+  </data>
+  <data name="关闭成功" xml:space="preserve">
+    <value>关闭成功</value>
+  </data>
+  <data name="保存成功" xml:space="preserve">
+    <value>保存成功</value>
+  </data>
+  <data name="打开成功" xml:space="preserve">
+    <value>打开成功</value>
+  </data>
+  <data name="文件路径为空，请先新建" xml:space="preserve">
+    <value>文件路径为空，请先新建</value>
+  </data>
+  <data name="新建成功" xml:space="preserve">
+    <value>新建成功</value>
+  </data>
+  <data name="已保存至" xml:space="preserve">
+    <value>已保存至</value>
+  </data>
+  <data name="执行" xml:space="preserve">
+    <value>执行</value>
+  </data>
+  <data name="返回" xml:space="preserve">
+    <value>返回</value>
+  </data>
+  <data name="成功" xml:space="preserve">
+    <value>成功</value>
+  </data>
+  <data name="出错" xml:space="preserve">
+    <value>出错</value>
+  </data>
+  <data name="异常" xml:space="preserve">
+    <value>异常</value>
+  </data>
+  <data name="已存在" xml:space="preserve">
+    <value>已存在</value>
+  </data>
+  <data name="超过最大实时线条限制，实时线条过多会导致性能大幅度下降" xml:space="preserve">
+    <value>超过最大实时线条限制，实时线条过多会导致性能大幅度下降</value>
+  </data>
+  <data name="不存在" xml:space="preserve">
+    <value>不存在</value>
+  </data>
+  <data name="调整" xml:space="preserve">
+    <value>调整</value>
+  </data>
+  <data name="重置" xml:space="preserve">
+    <value>重置</value>
+  </data>
+  <data name="保存图片" xml:space="preserve">
+    <value>保存图片</value>
+  </data>
+  <data name="复制图片" xml:space="preserve">
+    <value>复制图片</value>
+  </data>
+  <data name="线条操作" xml:space="preserve">
+    <value>线条操作</value>
+  </data>
+  <data name="不支持的图像文件格式" xml:space="preserve">
+    <value>不支持的图像文件格式</value>
+  </data>
+  <data name="图像保存失败" xml:space="preserve">
+    <value>图像保存失败</value>
+  </data>
+  <data name="未找到可匹配的重载方法" xml:space="preserve">
+    <value>未找到可匹配的重载方法</value>
+  </data>
+  <data name="无法将" xml:space="preserve">
+    <value>无法将</value>
+  </data>
+  <data name="转换为" xml:space="preserve">
+    <value>转换为</value>
+  </data>
+  <data name="已取消" xml:space="preserve">
+    <value>已取消</value>
+  </data>
+  <data name="流程已停止" xml:space="preserve">
+    <value>流程已停止</value>
+  </data>
+  <data name="流程异常" xml:space="preserve">
+    <value>流程异常</value>
   </data>
 </root>

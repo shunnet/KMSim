@@ -6,12 +6,13 @@
     xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
     xmlns:local="clr-namespace:Snet.Windows.KMSim"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:models="clr-namespace:Snet.Windows.Controls.data;assembly=Snet.Windows.Controls"
     xmlns:snet="https://shunnet.top"
     xmlns:ui="http://materialdesigninxaml.net/winfx/xaml/themes"
     xmlns:uis="http://schemas.lepo.co/wpfui/2022/xaml"
     Title="{snet:Loc 命令查找窗口}"
-    Width="700"
-    Height="450"
+    Width="900"
+    Height="600"
     snet:ResxLocalizationProvider.DefaultAssembly="Snet.Windows.KMSim"
     snet:ResxLocalizationProvider.DefaultDictionary="Language"
     Icon="/Icon.ico"
@@ -28,13 +29,18 @@
             Margin="16,16,16,0"
             ClearButtonEnabled="true"
             Icon="{uis:SymbolIcon Search24}"
-            OriginalItemsSource="{Binding ViewModel.AutoSuggestBoxSuggestions, Mode=OneWay}"
-            PlaceholderText="查找" />
+            OriginalItemsSource="{Binding SelectItems}"
+            PlaceholderText="{snet:Loc 查找}"
+            Text="{Binding SelectItem, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+            <uis:AutoSuggestBox.Resources>
+                <Style BasedOn="{StaticResource UiScrollBar}" TargetType="ScrollBar" />
+            </uis:AutoSuggestBox.Resources>
+        </uis:AutoSuggestBox>
 
 
         <Grid Grid.Row="1" Margin="16,6,16,16">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="200" />
+                <ColumnDefinition Width="268" />
                 <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
 
@@ -59,34 +65,21 @@
                                 Margin="5,0,0,0"
                                 HorizontalAlignment="Center"
                                 VerticalAlignment="Center"
-                                Text="方法"
+                                Text="{snet:Loc 方法}"
                                 TextAlignment="Center" />
                         </Grid>
                     </DataTemplate>
                 </GroupBox.HeaderTemplate>
 
-                <uis:ListView>
+                <uis:ListView ItemsSource="{Binding ListViewItemsSource}" SelectedItem="{Binding ListViewSelectedItem}">
                     <uis:ListView.Resources>
                         <Style BasedOn="{StaticResource UiScrollBar}" TargetType="ScrollBar" />
                     </uis:ListView.Resources>
-                    <uis:ListViewItem Content="Hello" />
-                    <uis:ListViewItem Content="World" />
-                    <uis:ListViewItem Content=":)" />
-                    <uis:ListViewItem Content="Hello" />
-                    <uis:ListViewItem Content="World" />
-                    <uis:ListViewItem Content=":)" />
-                    <uis:ListViewItem Content="Hello" />
-                    <uis:ListViewItem Content="World" />
-                    <uis:ListViewItem Content=":)" />
-                    <uis:ListViewItem Content="Hello" />
-                    <uis:ListViewItem Content="World" />
-                    <uis:ListViewItem Content=":)" />
-                    <uis:ListViewItem Content="Hello" />
-                    <uis:ListViewItem Content="World" />
-                    <uis:ListViewItem Content=":)" />
-                    <uis:ListViewItem Content="Hello" />
-                    <uis:ListViewItem Content="World" />
-                    <uis:ListViewItem Content=":)" />
+                    <ListView.ItemTemplate>
+                        <DataTemplate DataType="{x:Type models:EditModel}">
+                            <TextBlock Margin="8,4" Text="{Binding Name}" />
+                        </DataTemplate>
+                    </ListView.ItemTemplate>
                 </uis:ListView>
 
             </GroupBox>
@@ -107,17 +100,28 @@
                                 <ColumnDefinition Width="auto" />
                                 <ColumnDefinition Width="auto" />
                             </Grid.ColumnDefinitions>
-                            <ui:PackIcon Grid.Column="0" Kind="Design" />
+                            <ui:PackIcon Grid.Column="0" Kind="Details" />
                             <TextBlock
                                 Grid.Column="1"
                                 Margin="5,0,0,0"
                                 HorizontalAlignment="Center"
                                 VerticalAlignment="Center"
-                                Text="描述"
+                                Text="{snet:Loc 详情}"
                                 TextAlignment="Center" />
                         </Grid>
                     </DataTemplate>
                 </GroupBox.HeaderTemplate>
+                <!--  数据框  -->
+                <TextBox
+                    Margin="5"
+                    AcceptsReturn="True"
+                    BorderThickness="0,0,0,0"
+                    Foreground="{DynamicResource MaterialDesign.Brush.Secondary}"
+                    IsReadOnly="True"
+                    Style="{StaticResource MaterialDesignDataGridTextColumnEditingStyle}"
+                    Text="{Binding Details}"
+                    TextWrapping="Wrap"
+                    VerticalScrollBarVisibility="Hidden" />
             </GroupBox>
 
         </Grid>

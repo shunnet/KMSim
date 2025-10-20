@@ -116,13 +116,13 @@
     <value>Clear</value>
   </data>
   <data name="开始" xml:space="preserve">
-    <value>Start</value>
+    <value>Start F10</value>
   </data>
   <data name="停止" xml:space="preserve">
-    <value>Stop</value>
+    <value>Stop F11</value>
   </data>
   <data name="重试" xml:space="preserve">
-    <value>Retry</value>
+    <value>Retry F12</value>
   </data>
   <data name="文件" xml:space="preserve">
     <value>File</value>
@@ -153,5 +153,116 @@
   </data>
   <data name="命令查找窗口" xml:space="preserve">
     <value>[ Shunnet.top ] Windows KMSim Tool - Command Lookup Window</value>
+  </data>
+  <data name="查找" xml:space="preserve">
+    <value>Search</value>
+  </data>
+  <data name="描述" xml:space="preserve">
+    <value>Describe</value>
+  </data>
+  <data name="详情" xml:space="preserve">
+    <value>Details</value>
+  </data>
+  <data name="原始数据" xml:space="preserve">
+    <value>RawData</value>
+  </data>
+  <data name="方法" xml:space="preserve">
+    <value>Method</value>
+  </data>
+  <data name="提示" xml:space="preserve">
+    <value>Tip</value>
+  </data>
+  <data name="已取消操作" xml:space="preserve">
+    <value>Operation canceled</value>
+  </data>
+  <data name="成功保存至" xml:space="preserve">
+    <value>Successfully saved to</value>
+  </data>
+  <data name="检测到有输入，是否保存？" xml:space="preserve">
+    <value>Detected input, do you want to save it?</value>
+  </data>
+  <data name="请选择文件夹" xml:space="preserve">
+    <value>Please select a folder</value>
+  </data>
+  <data name="关闭成功" xml:space="preserve">
+    <value>Closed successfully</value>
+  </data>
+  <data name="保存成功" xml:space="preserve">
+    <value>Saved successfully</value>
+  </data>
+  <data name="打开成功" xml:space="preserve">
+    <value>Successfully opened</value>
+  </data>
+  <data name="文件路径为空，请先新建" xml:space="preserve">
+    <value>The file path is empty, please create a new one first</value>
+  </data>
+  <data name="新建成功" xml:space="preserve">
+    <value>New created successfully</value>
+  </data>
+  <data name="已保存至" xml:space="preserve">
+    <value>Saved to</value>
+  </data>
+  <data name="执行" xml:space="preserve">
+    <value>Execute</value>
+  </data>
+  <data name="返回" xml:space="preserve">
+    <value>Return</value>
+  </data>
+  <data name="成功" xml:space="preserve">
+    <value>Success</value>
+  </data>
+  <data name="出错" xml:space="preserve">
+    <value>Error</value>
+  </data>
+  <data name="异常" xml:space="preserve">
+    <value>Exception</value>
+  </data>
+  <data name="已存在" xml:space="preserve">
+    <value>already exists</value>
+  </data>
+  <data name="超过最大实时线条限制，实时线条过多会导致性能大幅度下降" xml:space="preserve">
+    <value>Exceeding the maximum real-time line limit, excessive real-time lines can lead to a significant decrease in performance</value>
+  </data>
+  <data name="不存在" xml:space="preserve">
+    <value>does not exist</value>
+  </data>
+  <data name="调整" xml:space="preserve">
+    <value>Adjust</value>
+  </data>
+  <data name="重置" xml:space="preserve">
+    <value>Reset</value>
+  </data>
+  <data name="保存图片" xml:space="preserve">
+    <value>Save Picture</value>
+  </data>
+  <data name="复制图片" xml:space="preserve">
+    <value>Copy Picture</value>
+  </data>
+  <data name="线条操作" xml:space="preserve">
+    <value>Line Operate</value>
+  </data>
+  <data name="不支持的图像文件格式" xml:space="preserve">
+    <value>Unsupported image file format</value>
+  </data>
+  <data name="图像保存失败" xml:space="preserve">
+    <value>Image save failed</value>
+  </data>
+  <data name="未找到可匹配的重载方法" xml:space="preserve">
+    <value>No matching overload method found</value>
+  </data>
+  <data name="无法将" xml:space="preserve">
+    <value>Unable to send</value>
+  </data>
+  <data name="转换为" xml:space="preserve">
+    <value>Convert to</value>
+  </data>
+  <data name="已取消" xml:space="preserve">
+    <value>Canceled</value>
+  </data>
+  <data name="流程已停止" xml:space="preserve">
+    <value>The process has stopped</value>
+  </data>
+  <data name="流程异常" xml:space="preserve">
+    <value>Process abnormal</value>
   </data>
 </root>
