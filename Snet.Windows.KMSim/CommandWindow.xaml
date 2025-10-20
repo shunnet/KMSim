@@ -15,7 +15,7 @@
     Height="600"
     snet:ResxLocalizationProvider.DefaultAssembly="Snet.Windows.KMSim"
     snet:ResxLocalizationProvider.DefaultDictionary="Language"
-    Icon="/Icon.ico"
+    Icon="/icon.ico"
     ResizeMode="NoResize"
     WindowStartupLocation="CenterScreen"
     mc:Ignorable="d">
