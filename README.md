@@ -1,7 +1,7 @@
 # <img src="https://api.shunnet.top/pic/nuget.png" height="28"> KMSim  
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)  
-[![Repo](https://img.shields.io/badge/Repository-shunnet/Rpc-blue)](https://github.com/shunnet/VisualIdentity)  
+[![Repo](https://img.shields.io/badge/Repository-shunnet/KMSim-blue)](https://github.com/shunnet/KMSim)  
 
 > 🚀 **Windows 平台可编程键鼠模拟器**  
 > 高效、灵活的自动化控制解决方案，适用于测试、批量操作及脚本化控制。
