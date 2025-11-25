@@ -1,4 +1,5 @@
 ﻿using System.Runtime.InteropServices;
+using System.Text.Json.Serialization;
 using System.Windows.Input;
 
 namespace Snet.Windows.KMSim.utility
@@ -12,6 +13,7 @@ namespace Snet.Windows.KMSim.utility
         /// <summary>
         /// 键盘事件类型
         /// </summary>
+        [JsonConverter(typeof(JsonStringEnumConverter))]
         public enum KeyboardEventType
         {
             KeyDown,
