@@ -182,55 +182,68 @@ namespace Snet.Windows.KMSim
         /// <summary>
         /// 信息框事件
         /// </summary>
-        public IAsyncRelayCommand InfoTextChanged => new AsyncRelayCommand<TextChangedEventArgs>(InfoTextChangedAsync);
+        public IAsyncRelayCommand InfoTextChanged => p_InfoTextChanged ??= new AsyncRelayCommand<TextChangedEventArgs>(InfoTextChangedAsync);
+        IAsyncRelayCommand p_InfoTextChanged;
         /// <summary>
         /// 数据清空
         /// </summary>
-        public IAsyncRelayCommand Clear => new AsyncRelayCommand(ClearAsync);
+        public IAsyncRelayCommand Clear => p_Clear ??= new AsyncRelayCommand(ClearAsync);
+        IAsyncRelayCommand p_Clear;
         /// <summary>
         /// 开始
         /// </summary>
-        public IAsyncRelayCommand Start => new AsyncRelayCommand(StartAsync);
+        public IAsyncRelayCommand Start => p_Start ??= new AsyncRelayCommand(StartAsync);
+        IAsyncRelayCommand p_Start;
         /// <summary>
         /// 停止
         /// </summary>
-        public IAsyncRelayCommand Stop => new AsyncRelayCommand(StopAsync);
+        public IAsyncRelayCommand Stop => p_Stop ??= new AsyncRelayCommand(StopAsync);
+        IAsyncRelayCommand p_Stop;
         /// <summary>
         /// 重试
         /// </summary>
-        public IAsyncRelayCommand Retry => new AsyncRelayCommand(RetryAsync);
+        public IAsyncRelayCommand Retry => p_Retry ??= new AsyncRelayCommand(RetryAsync);
+        IAsyncRelayCommand p_Retry;
         /// <summary>
         /// 命令集合
         /// </summary>
-        public IAsyncRelayCommand Command => new AsyncRelayCommand(CommandAsync);
+        public IAsyncRelayCommand Command => p_Command ??= new AsyncRelayCommand(CommandAsync);
+        IAsyncRelayCommand p_Command;
         /// <summary>
         /// 关于
         /// </summary>
-        public IAsyncRelayCommand About => new AsyncRelayCommand(AboutAsync);
+        public IAsyncRelayCommand About => p_About ??= new AsyncRelayCommand(AboutAsync);
+        IAsyncRelayCommand p_About;
         /// <summary>
         /// 留言
         /// </summary>
-        public IAsyncRelayCommand LeaveWord => new AsyncRelayCommand(LeaveWordAsync);
+        public IAsyncRelayCommand LeaveWord => p_LeaveWord ??= new AsyncRelayCommand(LeaveWordAsync);
+        IAsyncRelayCommand p_LeaveWord;
         /// <summary>
         /// 退出
         /// </summary>
-        public IAsyncRelayCommand Exit => new AsyncRelayCommand(ExitAsync);
+        public IAsyncRelayCommand Exit => p_Exit ??= new AsyncRelayCommand(ExitAsync);
+        IAsyncRelayCommand p_Exit;
         /// <summary>
         /// 新建
         /// </summary>
-        public IAsyncRelayCommand New => new AsyncRelayCommand(NewAsync);
+        public IAsyncRelayCommand New => p_New ??= new AsyncRelayCommand(NewAsync);
+        IAsyncRelayCommand p_New;
         /// <summary>
         /// 打开
         /// </summary>
-        public IAsyncRelayCommand Open => new AsyncRelayCommand(OpenAsync);
+        public IAsyncRelayCommand Open => p_Open ??= new AsyncRelayCommand(OpenAsync);
+        IAsyncRelayCommand p_Open;
         /// <summary>
         /// 保存
         /// </summary>
-        public IAsyncRelayCommand Save => new AsyncRelayCommand(SaveAsync);
+        public IAsyncRelayCommand Save => p_Save ??= new AsyncRelayCommand(SaveAsync);
+        IAsyncRelayCommand p_Save;
         /// <summary>
         /// 关闭
         /// </summary>
-        public IAsyncRelayCommand Close => new AsyncRelayCommand(CloseAsync);
+        public IAsyncRelayCommand Close => p_Close ??= new AsyncRelayCommand(CloseAsync);
+        IAsyncRelayCommand p_Close;
         #endregion 命令
 
         #region 方法
