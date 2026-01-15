@@ -894,6 +894,5 @@ namespace Snet.Windows.KMSim
         #endregion 文件操作
 
         #endregion 方法
-
     }
 }
