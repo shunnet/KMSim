@@ -281,6 +281,29 @@ namespace Snet.Windows.KMSim
                 FilePath = config.StoragePath;
                 EditText = config.LogicCode;
             }
+            if (EditText.IsNullOrWhiteSpace())
+            {
+                //显示默认数据
+                EditText = @"CopyContentAsync = 记事本
+LWinAsync
+DelayAsync = 1000
+PasteAsync
+DelayAsync = 1000
+EnterAsync
+DelayAsync = 1000
+CopyContentAsync = 欢迎使用 Shunnet.top 键鼠模拟器 
+PasteAsync
+DelayAsync = 2000
+SelectAllAsync
+BackAsync
+
+While = true
+PasteAsync
+OemCommaAsync
+DelayAsync = 1000
+EnterAsync
+";
+            }
         }
 
         /// <summary>

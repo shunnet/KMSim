@@ -96,8 +96,6 @@ namespace Snet.Windows.KMSim
 
             //打开主窗口
             InjectionWpf.Window<MainWindow, MainWindowViewModel>(true).Show();
-
-
         }
 
         #region 全局异常捕捉

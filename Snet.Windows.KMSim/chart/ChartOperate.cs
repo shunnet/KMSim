@@ -699,6 +699,11 @@ namespace Snet.Windows.KMSim.chart
                         plot.Menu?.AddSeparator();
                         plot.Menu?.Add(LanguageOperate.GetLanguageValue("线条操作"), LineOperate);
                     }
+                    if (plot.ContextMenu != null)
+                    {
+                        plot.ContextMenu.Style =
+                            (Style)Application.Current.FindResource("UiContextMenu");
+                    }
                     return true;
                 }
             }
