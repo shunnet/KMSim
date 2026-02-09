@@ -188,28 +188,72 @@
                 Style="{StaticResource MaterialDesignCardGroupBox}">
                 <GroupBox.HeaderTemplate>
                     <DataTemplate>
-                        <Grid HorizontalAlignment="Center" VerticalAlignment="Center">
+                        <Grid>
                             <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="auto" />
-                                <ColumnDefinition Width="auto" />
+                                <ColumnDefinition />
+                                <ColumnDefinition />
                             </Grid.ColumnDefinitions>
-                            <ui:PackIcon
-                                Grid.Column="0"
-                                Padding="0"
+                            <Grid
+                                Grid.ColumnSpan="2"
                                 HorizontalAlignment="Center"
-                                VerticalAlignment="Center"
-                                Kind="Monitor" />
-                            <TextBlock
+                                VerticalAlignment="Center">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="auto" />
+                                    <ColumnDefinition Width="auto" />
+                                </Grid.ColumnDefinitions>
+                                <ui:PackIcon
+                                    Grid.Column="0"
+                                    Padding="0"
+                                    HorizontalAlignment="Center"
+                                    VerticalAlignment="Center"
+                                    Kind="Monitor" />
+                                <TextBlock
+                                    Grid.Column="1"
+                                    Margin="5,0,0,0"
+                                    HorizontalAlignment="Center"
+                                    VerticalAlignment="Center"
+                                    Text="{snet:Loc 监控}"
+                                    TextAlignment="Center" />
+
+                            </Grid>
+
+                            <StackPanel
                                 Grid.Column="1"
-                                Margin="5,0,0,0"
-                                HorizontalAlignment="Center"
-                                VerticalAlignment="Center"
-                                Text="{snet:Loc 监控}"
-                                TextAlignment="Center" />
+                                HorizontalAlignment="Right"
+                                Orientation="Horizontal">
+                                <Label
+                                    Grid.Column="0"
+                                    Width="60"
+                                    Padding="0"
+                                    HorizontalContentAlignment="Center"
+                                    Content="{Binding Cpu}"
+                                    Foreground="{Binding Cpu_Foreground}" />
+                                <Label
+                                    Grid.Column="1"
+                                    Width="60"
+                                    Padding="0"
+                                    HorizontalContentAlignment="Center"
+                                    Content="{Binding Gpu}"
+                                    Foreground="{Binding Gpu_Foreground}" />
+                                <Label
+                                    Grid.Column="2"
+                                    Width="60"
+                                    Padding="0"
+                                    HorizontalContentAlignment="Center"
+                                    Content="{Binding RAM}"
+                                    Foreground="{Binding RAM_Foreground}" />
+                            </StackPanel>
+
                         </Grid>
                     </DataTemplate>
                 </GroupBox.HeaderTemplate>
-                <ContentControl Content="{Binding ChartControl}" />
+                <ContentControl Grid.Row="1" Content="{Binding ChartControl}">
+                    <ContentControl.Resources>
+                        <!--  滚动条样式  -->
+                        <Style BasedOn="{StaticResource UiContextMenu}" TargetType="ContextMenu" />
+                        <Style BasedOn="{StaticResource UiMenuItem}" TargetType="MenuItem" />
+                    </ContentControl.Resources>
+                </ContentControl>
             </GroupBox>
 
             <GroupBox
@@ -247,7 +291,6 @@
                     <!--  清空按钮  -->
                     <Button
                         Width="80"
-                        
                         Margin="0,-32,0,0"
                         Padding="0"
                         HorizontalAlignment="Right"

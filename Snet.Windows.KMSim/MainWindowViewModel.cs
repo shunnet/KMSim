@@ -9,6 +9,7 @@ using Snet.Windows.KMSim.core;
 using Snet.Windows.KMSim.data;
 using Snet.Windows.KMSim.handler;
 using Snet.Windows.KMSim.utility;
+using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.IO;
 using System.Windows.Controls;
@@ -40,12 +41,9 @@ namespace Snet.Windows.KMSim
                 RefreshTime = _interval
             });
             chartOperate.On();
-            chartOperate.Create(new() { SN = "Cpu", Title = "处理器", TitleEN = "Cpu" });
-            chartOperate.Create(new() { SN = "CpuTemp", Title = "处理器温度", TitleEN = "CpuTemp" });
-            chartOperate.Create(new() { SN = "Gpu", Title = "显卡", TitleEN = "Gpu" });
-            chartOperate.Create(new() { SN = "GpuTemp", Title = "显卡温度", TitleEN = "GpuTemp" });
-            chartOperate.Create(new() { SN = "NET", Title = "网络", TitleEN = "NET" });
-            chartOperate.Create(new() { SN = "RAM", Title = "内存", TitleEN = "RAM" });
+            chartOperate.Create(new() { SN = "Cpu", Title = "处理器", TitleEN = "Cpu", Color = "#4CAF50" });
+            chartOperate.Create(new() { SN = "Gpu", Title = "显卡", TitleEN = "Gpu", Color = "#F44336" });
+            chartOperate.Create(new() { SN = "RAM", Title = "内存", TitleEN = "RAM", Color = "#2196F3" });
 
             // 系统监控
             systemMonitoring = SystemMonitoring.Instance();
@@ -102,7 +100,7 @@ namespace Snet.Windows.KMSim
         /// <summary>
         /// 间隔
         /// </summary>
-        private int _interval = 100;
+        private int _interval = 1000;
         /// <summary>
         /// 锁
         /// </summary>
@@ -358,32 +356,42 @@ EnterAsync
         }
 
 
-        /// <summary>
-        /// 更新线条数据
-        /// </summary>
-        private void UpdateLineSeriesData(string name, double value)
+        #region 监控信息
+        public object Cpu
         {
-            chartOperate.Update(name, value);
+            get => GetProperty(() => Cpu);
+            set => SetProperty(() => Cpu, value);
         }
-
-
-        /// <summary>
-        /// 显示设备信息
-        /// </summary>
-        private async Task ShowDeviceInfoAsync(string info)
+        public System.Windows.Media.Brush Cpu_Foreground
         {
-            if (info.Contains("；"))
-            {
-                foreach (var item in info.Split('；'))
-                {
-                    await uiMessage.ShowAsync(item, withTime: false);
-                }
-            }
-            else
-            {
-                await uiMessage.ShowAsync(info, withTime: false);
-            }
+            get => cpu_Foreground;
+            set => SetProperty(ref cpu_Foreground, value);
         }
+        private System.Windows.Media.Brush cpu_Foreground = (System.Windows.Media.Brush)new System.Windows.Media.BrushConverter().ConvertFromString("#4CAF50");
+
+        public object Gpu
+        {
+            get => GetProperty(() => Gpu);
+            set => SetProperty(() => Gpu, value);
+        }
+        public System.Windows.Media.Brush Gpu_Foreground
+        {
+            get => gpu_Foreground;
+            set => SetProperty(ref gpu_Foreground, value);
+        }
+        private System.Windows.Media.Brush gpu_Foreground = (System.Windows.Media.Brush)new System.Windows.Media.BrushConverter().ConvertFromString("#F44336");
+
+        public object RAM
+        {
+            get => GetProperty(() => RAM);
+            set => SetProperty(() => RAM, value);
+        }
+        public System.Windows.Media.Brush RAM_Foreground
+        {
+            get => ram_Foreground;
+            set => SetProperty(ref ram_Foreground, value);
+        }
+        private System.Windows.Media.Brush ram_Foreground = (System.Windows.Media.Brush)new System.Windows.Media.BrushConverter().ConvertFromString("#2196F3");
 
         /// <summary>
         /// 更新系统检测值
@@ -394,21 +402,13 @@ EnterAsync
             {
                 await Task.Run(async () =>
                 {
-                    HardwareData hardwareData = systemMonitoring.GetInfo(true);
-
-                    await ShowDeviceInfoAsync(hardwareData.SystemName);
-                    await ShowDeviceInfoAsync(hardwareData.SystemVer);
-                    await ShowDeviceInfoAsync(hardwareData.SystemRunTime);
-                    await ShowDeviceInfoAsync(hardwareData.CpuInfo);
-                    await ShowDeviceInfoAsync(hardwareData.GpuInfo);
-                    await ShowDeviceInfoAsync(hardwareData.MemoryInfo);
-                    await ShowDeviceInfoAsync(hardwareData.DiskInfo);
-                    await ShowDeviceInfoAsync(hardwareData.BiosInfo);
-                    await ShowDeviceInfoAsync(hardwareData.NetworkInfo);
+                    //让刻度同步
+                    ConcurrentDictionary<string, double> values = new ConcurrentDictionary<string, double>();
 
                     while (!token.IsCancellationRequested)
                     {
-                        hardwareData = systemMonitoring.GetInfo();
+
+                        HardwareData hardwareData = systemMonitoring.GetInfo();
 
                         foreach (var iteminfolist in hardwareData.Info)
                         {
@@ -419,7 +419,7 @@ EnterAsync
                                     double value = double.Parse(item.Value);
                                     if (item.Key.Equals("负载,Memory") && value > 0)
                                     {
-                                        UpdateLineSeriesData("RAM", value);
+                                        values["RAM"] = value;
                                     }
                                 }
                             }
@@ -430,12 +430,9 @@ EnterAsync
                                     double value = double.Parse(item.Value);
                                     if (item.Key.Equals("负载,GPU Core") && value > 0)
                                     {
-                                        UpdateLineSeriesData("Gpu", value);
+                                        values["Gpu"] = value;
                                     }
-                                    if (item.Key.Equals("温度,GPU Core") && value > 0)
-                                    {
-                                        UpdateLineSeriesData("GpuTemp", value);
-                                    }
+
                                 }
                             }
                             if (iteminfolist.Key.Equals("处理器"))
@@ -445,27 +442,30 @@ EnterAsync
                                     double value = double.Parse(item.Value);
                                     if (item.Key.Equals("负载,CPU Total") && value > 0)
                                     {
-                                        UpdateLineSeriesData("Cpu", value);
+                                        values["Cpu"] = value;
                                     }
-                                    if (item.Key.Equals("温度,Core Max") && value > 0)
-                                    {
-                                        UpdateLineSeriesData("CpuTemp", value);
-                                    }
+
                                 }
                             }
-
-                            if (iteminfolist.Key.Equals("网络"))
+                        }
+                        if (values.Count == 3)
+                        {
+                            foreach (var item in values)
                             {
-                                foreach (var item in iteminfolist.Values)
+                                double value = Math.Round(item.Value, 2);
+                                UpdateLineSeriesData(item.Key, value);
+
+                                switch (item.Key)
                                 {
-                                    if (item.Key.Equals("负载,Network Utilization"))
-                                    {
-                                        double value = double.Parse(item.Value);
-                                        if (value > 0)
-                                        {
-                                            UpdateLineSeriesData("NET", value);
-                                        }
-                                    }
+                                    case "Cpu":
+                                        Cpu = value.ToString("F2") + "%";
+                                        break;
+                                    case "Gpu":
+                                        Gpu = value.ToString("F2") + "%";
+                                        break;
+                                    case "RAM":
+                                        RAM = value.ToString("F2") + "%";
+                                        break;
                                 }
                             }
                         }
@@ -473,13 +473,19 @@ EnterAsync
                     }
                 }, token).ConfigureAwait(false);
             }
-            catch (TaskCanceledException) { }
-            catch (OperationCanceledException) { }
-            catch (Exception ex)
-            {
-                await uiMessage.ShowAsync(ex.Message);
-            }
+            catch (TaskCanceledException ex) { await uiMessage.ShowAsync(ex.Message); }
+            catch (OperationCanceledException ex) { await uiMessage.ShowAsync(ex.Message); }
+            catch (Exception ex) { await uiMessage.ShowAsync(ex.Message); }
         }
+
+        /// <summary>
+        /// 更新线条数据
+        /// </summary>
+        private void UpdateLineSeriesData(string name, double value)
+        {
+            chartOperate.Update(name, value);
+        }
+        #endregion
 
         /// <summary>
         /// 获取鼠标的YX坐标
