@@ -215,7 +215,7 @@ namespace Snet.Windows.KMSim
             }
             , System.Windows.Threading.DispatcherPriority.Loaded);
 
-            LogHelper.Error(msg, "Snet.Iot.Tool.log", e);
+            LogHelper.Error(msg, "Snet.Windows.KMSim.log", e);
         }
 
         #endregion
