@@ -24,7 +24,7 @@
 	<ItemGroup>
 		<PackageReference Include="LibreHardwareMonitorLib" Version="0.9.6" />
 		<PackageReference Include="ScottPlot.WPF" Version="5.1.57" />
-		<PackageReference Include="Snet.Windows.Controls" Version="26.77.1" />
+		<PackageReference Include="Snet.Windows.Controls" Version="26.78.1" />
 	</ItemGroup>
 
 	<ItemGroup>
