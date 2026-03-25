@@ -3,6 +3,10 @@ using System.Text;
 
 namespace Snet.Windows.KMSim.core
 {
+    /// <summary>
+    /// Win32 API P/Invoke 封装类，提供键盘、鼠标、窗口操作等底层系统调用。
+    /// <para>包含鼠标事件常量、键盘事件常量、特殊键码常量、窗口定位常量及相关 API 声明。</para>
+    /// </summary>
     public static class Win32
     {
         /// <summary>

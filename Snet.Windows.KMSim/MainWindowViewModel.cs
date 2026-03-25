@@ -20,6 +20,9 @@ using MessageBox = Snet.Windows.Controls.message.MessageBox;
 
 namespace Snet.Windows.KMSim
 {
+    /// <summary>
+    /// 主窗口视图模型，负责系统监控、脚本执行、文件操作等核心业务逻辑。
+    /// </summary>
     public class MainWindowViewModel : BindNotify
     {
         public MainWindowViewModel(GlobalKeyboardHook hook)
@@ -416,8 +419,8 @@ EnterAsync
                             {
                                 foreach (var item in iteminfolist.Values)
                                 {
-                                    double value = double.Parse(item.Value);
-                                    if (item.Key.Equals("负载,Memory") && value > 0)
+                                    if (double.TryParse(item.Value, System.Globalization.CultureInfo.InvariantCulture, out double value)
+                                        && item.Key.Equals("负载,Memory") && value > 0)
                                     {
                                         values["RAM"] = value;
                                     }
@@ -427,8 +430,8 @@ EnterAsync
                             {
                                 foreach (var item in iteminfolist.Values)
                                 {
-                                    double value = double.Parse(item.Value);
-                                    if (item.Key.Equals("负载,GPU Core") && value > 0)
+                                    if (double.TryParse(item.Value, System.Globalization.CultureInfo.InvariantCulture, out double value)
+                                        && item.Key.Equals("负载,GPU Core") && value > 0)
                                     {
                                         values["Gpu"] = value;
                                     }
@@ -439,8 +442,8 @@ EnterAsync
                             {
                                 foreach (var item in iteminfolist.Values)
                                 {
-                                    double value = double.Parse(item.Value);
-                                    if (item.Key.Equals("负载,CPU Total") && value > 0)
+                                    if (double.TryParse(item.Value, System.Globalization.CultureInfo.InvariantCulture, out double value)
+                                        && item.Key.Equals("负载,CPU Total") && value > 0)
                                     {
                                         values["Cpu"] = value;
                                     }
@@ -577,7 +580,7 @@ EnterAsync
             {
                 if (await MessageBox.Show(App.LanguageOperate.GetLanguageValue("检测到有输入，是否保存？"), App.LanguageOperate.GetLanguageValue("提示"), Controls.@enum.MessageBoxButton.YesNo, Controls.@enum.MessageBoxImage.Question))
                 {
-                    if (!await saveSelect(App.LanguageOperate.GetLanguageValue("成功保存至")))
+                    if (!await SaveSelectAsync(App.LanguageOperate.GetLanguageValue("成功保存至")))
                     {
                         await MessageBox.Show(App.LanguageOperate.GetLanguageValue("已取消操作"), App.LanguageOperate.GetLanguageValue("提示"), Controls.@enum.MessageBoxButton.OK, Controls.@enum.MessageBoxImage.Information);
                     }
@@ -812,7 +815,7 @@ EnterAsync
             {
                 if (await MessageBox.Show(App.LanguageOperate.GetLanguageValue("检测到有输入，是否保存？"), App.LanguageOperate.GetLanguageValue("提示"), Controls.@enum.MessageBoxButton.YesNo, Controls.@enum.MessageBoxImage.Question))
                 {
-                    if (!await saveSelect(App.LanguageOperate.GetLanguageValue("成功保存至")))
+                    if (!await SaveSelectAsync(App.LanguageOperate.GetLanguageValue("成功保存至")))
                     {
                         await MessageBox.Show(App.LanguageOperate.GetLanguageValue("已取消操作"), App.LanguageOperate.GetLanguageValue("提示"), Controls.@enum.MessageBoxButton.OK, Controls.@enum.MessageBoxImage.Information);
                         return;
@@ -820,7 +823,7 @@ EnterAsync
                 }
             }
 
-            if (!await saveSelect(App.LanguageOperate.GetLanguageValue("新建成功")))
+            if (!await SaveSelectAsync(App.LanguageOperate.GetLanguageValue("新建成功")))
             {
                 await MessageBox.Show(App.LanguageOperate.GetLanguageValue("已取消操作"), App.LanguageOperate.GetLanguageValue("提示"), Controls.@enum.MessageBoxButton.OK, Controls.@enum.MessageBoxImage.Information);
                 return;
@@ -857,7 +860,7 @@ EnterAsync
             {
                 if (await MessageBox.Show(App.LanguageOperate.GetLanguageValue("检测到有输入，是否保存？"), App.LanguageOperate.GetLanguageValue("提示"), Controls.@enum.MessageBoxButton.YesNo, Controls.@enum.MessageBoxImage.Question))
                 {
-                    if (!await saveSelect(App.LanguageOperate.GetLanguageValue("成功保存至")))
+                    if (!await SaveSelectAsync(App.LanguageOperate.GetLanguageValue("成功保存至")))
                     {
                         await MessageBox.Show(App.LanguageOperate.GetLanguageValue("已取消操作"), App.LanguageOperate.GetLanguageValue("提示"), Controls.@enum.MessageBoxButton.OK, Controls.@enum.MessageBoxImage.Information);
                     }
@@ -882,7 +885,7 @@ EnterAsync
             {
                 if (await MessageBox.Show(App.LanguageOperate.GetLanguageValue("检测到有输入，是否保存？"), App.LanguageOperate.GetLanguageValue("提示"), Controls.@enum.MessageBoxButton.YesNo, Controls.@enum.MessageBoxImage.Question))
                 {
-                    if (!await saveSelect(App.LanguageOperate.GetLanguageValue("成功保存至")))
+                    if (!await SaveSelectAsync(App.LanguageOperate.GetLanguageValue("成功保存至")))
                     {
                         await MessageBox.Show(App.LanguageOperate.GetLanguageValue("已取消操作"), App.LanguageOperate.GetLanguageValue("提示"), Controls.@enum.MessageBoxButton.OK, Controls.@enum.MessageBoxImage.Information);
                         return;
@@ -903,10 +906,11 @@ EnterAsync
         }
 
         /// <summary>
-        /// 私有保存
+        /// 私有保存，弹出文件夹选择对话框并生成文件名后调用 CSAsync 完成存储。
         /// </summary>
-        /// <returns></returns>
-        private async Task<bool> saveSelect(string message)
+        /// <param name="message">保存成功后的提示消息前缀</param>
+        /// <returns>保存是否成功</returns>
+        private async Task<bool> SaveSelectAsync(string message)
         {
             string path = Win32Handler.Select(App.LanguageOperate.GetLanguageValue("请选择文件夹"), true);
             if (!string.IsNullOrEmpty(path))

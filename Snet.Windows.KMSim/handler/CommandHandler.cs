@@ -19,8 +19,8 @@ namespace Snet.Windows.KMSim.handler;
 /// </summary>
 public static class CommandHandler
 {
-    // 缓存 XML 文档，避免重复加载
-    private static readonly Dictionary<string, XDocument> _xmlCache = new();
+    // 缓存 XML 文档，避免重复加载（使用 ConcurrentDictionary 确保多线程安全）
+    private static readonly ConcurrentDictionary<string, XDocument> _xmlCache = new();
 
     /// <summary>
     /// 获取指定类型的所有方法（自动查找 XML 注释文件）
@@ -75,26 +75,26 @@ public static class CommandHandler
     }
 
     /// <summary>
-    /// 安全加载 XML 文件并缓存
+    /// 安全加载 XML 文件并缓存，使用 ConcurrentDictionary.GetOrAdd 确保线程安全。
     /// </summary>
+    /// <param name="xmlPath">XML 注释文件路径</param>
+    /// <returns>加载成功返回 XDocument，否则返回 null</returns>
     private static XDocument? LoadXmlSafe(string xmlPath)
     {
         if (string.IsNullOrWhiteSpace(xmlPath) || !File.Exists(xmlPath))
             return null;
 
-        if (_xmlCache.TryGetValue(xmlPath, out var cached))
-            return cached;
-
-        try
+        return _xmlCache.GetOrAdd(xmlPath, path =>
         {
-            var xml = XDocument.Load(xmlPath);
-            _xmlCache[xmlPath] = xml;
-            return xml;
-        }
-        catch
-        {
-            return null;
-        }
+            try
+            {
+                return XDocument.Load(path);
+            }
+            catch
+            {
+                return null!;
+            }
+        });
     }
 
     /// <summary>
