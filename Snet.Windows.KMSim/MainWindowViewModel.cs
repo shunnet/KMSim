@@ -252,9 +252,10 @@ namespace Snet.Windows.KMSim
         #region 其余操作
 
         /// <summary>
-        /// 窗体关闭时,保存文件位置,以便下次打开软件读取文件
+        /// 窗体关闭时，保存当前文件路径与编辑内容到配置文件，以便下次打开软件时恢复状态。
+        /// 若配置文件所在目录不存在，则自动创建。
         /// </summary>
-        /// <returns></returns>
+        /// <returns>异步任务</returns>
         public async Task CSAsync()
         {
             if (!FilePath.IsNullOrWhiteSpace() && !EditText.IsNullOrWhiteSpace())
@@ -264,15 +265,22 @@ namespace Snet.Windows.KMSim
                     StoragePath = FilePath,
                     LogicCode = EditText
                 };
+
+                // 确保配置文件目录存在，修复首次加载时目录不存在导致配置写入失败的问题
+                string? dir = Path.GetDirectoryName(configFile);
+                if (!string.IsNullOrEmpty(dir) && !Directory.Exists(dir))
+                    Directory.CreateDirectory(dir);
+
                 FileHandler.StringToFile(configFile, config.ToJson(true));
                 FileHandler.StringToFile(FilePath, EditText);
             }
         }
 
         /// <summary>
-        /// 打开时通过配置获取显示数据
+        /// 启动时从配置文件恢复上一次打开的脚本文件路径与逻辑代码内容。
+        /// 若配置文件不存在或内容为空，则显示默认演示脚本。
         /// </summary>
-        /// <returns></returns>
+        /// <returns>异步任务</returns>
         public async Task SGAsync()
         {
             if (File.Exists(configFile))
@@ -397,20 +405,22 @@ EnterAsync
         private System.Windows.Media.Brush ram_Foreground = (System.Windows.Media.Brush)new System.Windows.Media.BrushConverter().ConvertFromString("#2196F3");
 
         /// <summary>
-        /// 更新系统检测值
+        /// 定时更新系统硬件监控数值（CPU、GPU、RAM 使用率），并同步更新图表和界面显示。
+        /// 使用 PeriodicTimer 替代 Task.Delay 以获得更稳定的定时间隔。
         /// </summary>
+        /// <param name="token">取消令牌，用于停止监控循环</param>
         private async Task UpdateSystemMonitoringValueAsync(CancellationToken token = default)
         {
             try
             {
                 await Task.Run(async () =>
                 {
-                    //让刻度同步
+                    // 在循环外分配字典，避免每次迭代产生 GC 压力
                     ConcurrentDictionary<string, double> values = new ConcurrentDictionary<string, double>();
 
-                    while (!token.IsCancellationRequested)
+                    using var timer = new PeriodicTimer(TimeSpan.FromMilliseconds(_interval));
+                    while (await timer.WaitForNextTickAsync(token))
                     {
-
                         HardwareData hardwareData = systemMonitoring.GetInfo();
 
                         foreach (var iteminfolist in hardwareData.Info)
@@ -426,7 +436,8 @@ EnterAsync
                                     }
                                 }
                             }
-                            if (iteminfolist.Key.Equals("英伟达显卡") || iteminfolist.Key.Equals("因特尔显卡") || iteminfolist.Key.Equals("AMD显卡"))
+                            // 修复：「因特尔显卡」-> 「英特尔显卡」（与 GetHardwareNameCn 映射保持一致）
+                            if (iteminfolist.Key.Equals("英伟达显卡") || iteminfolist.Key.Equals("英特尔显卡") || iteminfolist.Key.Equals("AMD显卡"))
                             {
                                 foreach (var item in iteminfolist.Values)
                                 {
@@ -435,7 +446,6 @@ EnterAsync
                                     {
                                         values["Gpu"] = value;
                                     }
-
                                 }
                             }
                             if (iteminfolist.Key.Equals("处理器"))
@@ -447,7 +457,6 @@ EnterAsync
                                     {
                                         values["Cpu"] = value;
                                     }
-
                                 }
                             }
                         }
@@ -461,29 +470,30 @@ EnterAsync
                                 switch (item.Key)
                                 {
                                     case "Cpu":
-                                        Cpu = value.ToString("F2") + "%";
+                                        Cpu = $"{value:F2}%";
                                         break;
                                     case "Gpu":
-                                        Gpu = value.ToString("F2") + "%";
+                                        Gpu = $"{value:F2}%";
                                         break;
                                     case "RAM":
-                                        RAM = value.ToString("F2") + "%";
+                                        RAM = $"{value:F2}%";
                                         break;
                                 }
                             }
                         }
-                        await Task.Delay(_interval, token);
                     }
                 }, token).ConfigureAwait(false);
             }
-            catch (TaskCanceledException ex) { await uiMessage.ShowAsync(ex.Message); }
-            catch (OperationCanceledException ex) { await uiMessage.ShowAsync(ex.Message); }
+            catch (TaskCanceledException) { }
+            catch (OperationCanceledException) { }
             catch (Exception ex) { await uiMessage.ShowAsync(ex.Message); }
         }
 
         /// <summary>
-        /// 更新线条数据
+        /// 更新指定名称的图表线条数据，将最新数值推送到图表组件进行实时绘制。
         /// </summary>
+        /// <param name="name">线条名称（如 "Cpu"、"Gpu"、"RAM"）</param>
+        /// <param name="value">最新数值</param>
         private void UpdateLineSeriesData(string name, double value)
         {
             chartOperate.Update(name, value);
@@ -491,24 +501,25 @@ EnterAsync
         #endregion
 
         /// <summary>
-        /// 获取鼠标的YX坐标
+        /// 定时获取鼠标的 X/Y 坐标并更新窗口标题显示。
+        /// 使用 PeriodicTimer 替代 Task.Delay 以获得更稳定的定时间隔。
         /// </summary>
-        /// <param name="token"></param>
-        /// <returns></returns>
+        /// <param name="token">取消令牌，用于停止坐标获取循环</param>
+        /// <returns>异步任务</returns>
         private async Task GetXYAsync(CancellationToken token = default)
         {
             try
             {
                 await Task.Run(async () =>
                 {
-                    while (!token.IsCancellationRequested)
+                    using var timer = new PeriodicTimer(TimeSpan.FromMilliseconds(_interval));
+                    while (await timer.WaitForNextTickAsync(token))
                     {
                         if (Win32.GetCursorPos(out Snet.Windows.KMSim.core.Win32.POINT desktopPoint))
                         {
                             // 显示到窗口标题
                             SystemTitle = $"{App.LanguageOperate.GetLanguageValue("SystemTitle")}  ‹ {desktopPoint.X:F0} , {desktopPoint.Y:F0} ›";
                         }
-                        await Task.Delay(_interval, token);
                     }
                 }, token).ConfigureAwait(false);
             }
@@ -534,9 +545,9 @@ EnterAsync
         }
 
         /// <summary>
-        /// 清空消息
+        /// 清空信息面板中所有已显示的消息内容。
         /// </summary>
-        /// <returns></returns>
+        /// <returns>异步任务</returns>
         public async Task ClearAsync()
         {
             await uiMessage.ClearAsync();
@@ -545,9 +556,9 @@ EnterAsync
 
         #region 帮助操作
         /// <summary>
-        /// 关于
+        /// 打开"关于"页面，使用系统默认浏览器导航至官方博客。
         /// </summary>
-        /// <returns></returns>
+        /// <returns>异步任务</returns>
         private async Task AboutAsync()
         {
             Process.Start(new ProcessStartInfo
@@ -558,9 +569,9 @@ EnterAsync
         }
 
         /// <summary>
-        /// 留言
+        /// 打开留言页面，使用系统默认浏览器导航至官方留言板。
         /// </summary>
-        /// <returns></returns>
+        /// <returns>异步任务</returns>
         private async Task LeaveWordAsync()
         {
             Process.Start(new ProcessStartInfo
@@ -571,9 +582,10 @@ EnterAsync
         }
 
         /// <summary>
-        /// 退出
+        /// 退出应用程序。退出前检查是否有未保存的编辑内容并提示保存，
+        /// 保存配置后依次取消后台任务、关闭子窗口、卸载键盘钩子，最终关闭应用。
         /// </summary>
-        /// <returns></returns>
+        /// <returns>异步任务</returns>
         public async Task ExitAsync()
         {
             if (!EditText.IsNullOrWhiteSpace() && FilePath.IsNullOrWhiteSpace())
@@ -592,19 +604,22 @@ EnterAsync
                 FileHandler.StringToFile(FilePath, EditText);
             }
 
+            // 先保存配置，再执行退出流程（修复 Shutdown 在 CSAsync 之前导致配置丢失的问题）
+            await CSAsync().ConfigureAwait(false);
+
             globalToken?.Cancel();
             operateToken?.Cancel();
             commandWindow?.Close();
             await uiMessage.StopAsync().ConfigureAwait(false);
             globalKeyboardHook?.Unhook();
             System.Windows.Application.Current.Shutdown();
-            await CSAsync().ConfigureAwait(false);
         }
 
         /// <summary>
-        /// 命令
+        /// 打开命令查询窗口。若窗口已存在则将其前置，否则创建新窗口。
+        /// 窗口关闭时自动置空引用，以便下次重新创建。
         /// </summary>
-        /// <returns></returns>
+        /// <returns>异步任务</returns>
         private async Task CommandAsync()
         {
             if (commandWindow == null)
@@ -625,8 +640,10 @@ EnterAsync
         #region 逻辑操作
 
         /// <summary>
-        /// 开始执行（线程安全，可重复调用）
+        /// 开始执行脚本逻辑（线程安全，可重复调用）。
+        /// 若已有运行中的任务，则先取消旧任务再启动新任务，避免重复执行。
         /// </summary>
+        /// <returns>当前运行任务的 Task</returns>
         private Task StartAsync()
         {
             Task? previousTask;
@@ -655,8 +672,10 @@ EnterAsync
         }
 
         /// <summary>
-        /// 停止执行（线程安全）
+        /// 停止当前正在执行的脚本逻辑（线程安全）。
+        /// 通过取消令牌通知运行中的任务停止，并等待其完成。
         /// </summary>
+        /// <returns>异步任务</returns>
         private async Task StopAsync()
         {
             Task? running;
@@ -674,8 +693,9 @@ EnterAsync
         }
 
         /// <summary>
-        /// 重试：先停止再启动
+        /// 重试执行脚本逻辑：先停止当前运行的任务，再重新启动执行。
         /// </summary>
+        /// <returns>异步任务</returns>
         private async Task RetryAsync()
         {
             await StopAsync().ConfigureAwait(false);
@@ -799,9 +819,10 @@ EnterAsync
 
 
         /// <summary>
-        /// 新建
+        /// 新建脚本文件。若当前有已保存的文件路径则先保存内容，
+        /// 若有未保存的编辑内容则提示用户保存，然后弹出文件夹选择对话框创建新文件。
         /// </summary>
-        /// <returns></returns>
+        /// <returns>异步任务</returns>
         private async Task NewAsync()
         {
             if (!EditText.IsNullOrWhiteSpace() && !FilePath.IsNullOrWhiteSpace())
@@ -821,6 +842,10 @@ EnterAsync
                         return;
                     }
                 }
+                else
+                {
+                    return;
+                }
             }
 
             if (!await SaveSelectAsync(App.LanguageOperate.GetLanguageValue("新建成功")))
@@ -832,9 +857,9 @@ EnterAsync
             EditText = string.Empty;
         }
         /// <summary>
-        /// 打开
+        /// 打开已有的脚本文件，通过文件选择对话框选取 .ini 文件后加载其内容到编辑区。
         /// </summary>
-        /// <returns></returns>
+        /// <returns>异步任务</returns>
         private async Task OpenAsync()
         {
             FilePath = Win32Handler.Select(App.LanguageOperate.GetLanguageValue("请选择文件"), false, new() { { $"(*.ini)", $" *.ini" } });
@@ -845,9 +870,10 @@ EnterAsync
             }
         }
         /// <summary>
-        /// 保存
+        /// 保存当前编辑内容。若文件路径为空则提示先新建，
+        /// 若有内容但无路径则提示选择保存位置，否则直接保存到已有路径。
         /// </summary>
-        /// <returns></returns>
+        /// <returns>异步任务</returns>
         private async Task SaveAsync()
         {
             if (EditText.IsNullOrWhiteSpace() && FilePath.IsNullOrWhiteSpace())
@@ -871,9 +897,10 @@ EnterAsync
             await uiMessage.ShowAsync(App.LanguageOperate.GetLanguageValue("保存成功"));
         }
         /// <summary>
-        /// 关闭
+        /// 关闭当前脚本文件。若有未保存的编辑内容则提示保存，
+        /// 保存完成后清空编辑区和文件路径。
         /// </summary>
-        /// <returns></returns>
+        /// <returns>异步任务</returns>
         private async Task CloseAsync()
         {
             if (EditText.IsNullOrWhiteSpace() && FilePath.IsNullOrWhiteSpace())

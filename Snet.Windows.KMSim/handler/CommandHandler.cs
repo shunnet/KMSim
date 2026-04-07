@@ -23,6 +23,12 @@ public static class CommandHandler
     private static readonly ConcurrentDictionary<string, XDocument> _xmlCache = new();
 
     /// <summary>
+    /// 预编译的嵌套调用正则表达式（匹配 MethodName‹param1 param2› 格式），
+    /// 使用 RegexOptions.Compiled 避免每次调用时重新编译，提升热路径性能。
+    /// </summary>
+    private static readonly Regex NestedCallPattern = new(@"([^\s‹=]+)‹(?>[^‹›]+|(?<Open>‹)|(?<-Open>›))*(?(Open)(?!))›", RegexOptions.Compiled);
+
+    /// <summary>
     /// 获取指定类型的所有方法（自动查找 XML 注释文件）
     /// </summary>
     /// <param name="type">目标类型</param>
@@ -340,10 +346,9 @@ public static class CommandHandler
 
         if (parameters != null && parameters.Length > 0)
         {
-            string pattern = @"([^\s‹=]+)‹(?>[^‹›]+|(?<Open>‹)|(?<-Open>›))*(?(Open)(?!))›";
             for (int i = 0; i < parameters.Length; i++)
             {
-                Match match = Regex.Match(parameters[i].ToString(), pattern);
+                Match match = NestedCallPattern.Match(parameters[i].ToString());
                 if (match.Success)
                 {
                     // 整个匹配

@@ -76,10 +76,19 @@ namespace Snet.Windows.KMSim.utility
 
         /// <summary>
         /// 安装全局低级键盘钩子。
+        /// 在 .NET 5+ 中，必须传入有效的模块句柄，否则低级钩子无法接收回调。
+        /// 使用 LoadLibrary("user32.dll") 获取模块句柄是 .NET Core 下最可靠的方式。
         /// </summary>
         public void SetHook()
         {
-            _hookID = SetWindowsHookEx(WH_KEYBOARD_LL, _proc, IntPtr.Zero, 0);
+            IntPtr hMod = LoadLibrary("user32.dll");
+            _hookID = SetWindowsHookEx(WH_KEYBOARD_LL, _proc, hMod, 0);
+
+            if (_hookID == IntPtr.Zero)
+            {
+                int errorCode = Marshal.GetLastWin32Error();
+                System.Diagnostics.Debug.WriteLine($"SetWindowsHookEx 安装钩子失败，错误码: {errorCode}");
+            }
         }
 
         /// <summary>
@@ -108,39 +117,47 @@ namespace Snet.Windows.KMSim.utility
         /// <returns>下一个钩子的返回值</returns>
         private IntPtr HookCallback(int nCode, IntPtr wParam, IntPtr lParam)
         {
-            if (nCode >= 0)
+            try
             {
-                var msg = (int)wParam;
-
-                if (msg is WM_KEYDOWN or WM_SYSKEYDOWN)
+                if (nCode >= 0)
                 {
-                    KBDLLHOOKSTRUCT kb = Marshal.PtrToStructure<KBDLLHOOKSTRUCT>(lParam);
-                    Key key = KeyInterop.KeyFromVirtualKey((int)kb.vkCode);
+                    var msg = (int)wParam;
 
-                    lock (_keysLock)
+                    if (msg is WM_KEYDOWN or WM_SYSKEYDOWN)
                     {
-                        _pressedKeys.Add(key);
+                        KBDLLHOOKSTRUCT kb = Marshal.PtrToStructure<KBDLLHOOKSTRUCT>(lParam);
+                        Key key = KeyInterop.KeyFromVirtualKey((int)kb.vkCode);
+
+                        lock (_keysLock)
+                        {
+                            _pressedKeys.Add(key);
+                        }
+
+                        // 触发按下事件
+                        KeyEvent?.Invoke(key, KeyboardEventType.KeyDown);
+
+                        // 检查是否构成组合键
+                        DetectComboKey();
                     }
-
-                    // 触发按下事件
-                    KeyEvent?.Invoke(key, KeyboardEventType.KeyDown);
-
-                    // 检查是否构成组合键
-                    DetectComboKey();
-                }
-                else if (msg is WM_KEYUP or WM_SYSKEYUP)
-                {
-                    KBDLLHOOKSTRUCT kb = Marshal.PtrToStructure<KBDLLHOOKSTRUCT>(lParam);
-                    Key key = KeyInterop.KeyFromVirtualKey((int)kb.vkCode);
-
-                    lock (_keysLock)
+                    else if (msg is WM_KEYUP or WM_SYSKEYUP)
                     {
-                        _pressedKeys.Remove(key);
-                    }
+                        KBDLLHOOKSTRUCT kb = Marshal.PtrToStructure<KBDLLHOOKSTRUCT>(lParam);
+                        Key key = KeyInterop.KeyFromVirtualKey((int)kb.vkCode);
 
-                    // 触发松开事件
-                    KeyEvent?.Invoke(key, KeyboardEventType.KeyUp);
+                        lock (_keysLock)
+                        {
+                            _pressedKeys.Remove(key);
+                        }
+
+                        // 触发松开事件
+                        KeyEvent?.Invoke(key, KeyboardEventType.KeyUp);
+                    }
                 }
+            }
+            catch (Exception ex)
+            {
+                // 捕获所有异常，防止未处理异常导致 Windows 静默移除钩子
+                System.Diagnostics.Debug.WriteLine($"HookCallback 异常: {ex.Message}");
             }
 
             return CallNextHookEx(_hookID, nCode, wParam, lParam);
@@ -210,6 +227,12 @@ namespace Snet.Windows.KMSim.utility
 
         [DllImport("user32.dll", CharSet = CharSet.Auto, SetLastError = true)]
         private static extern IntPtr CallNextHookEx(IntPtr hhk, int nCode, IntPtr wParam, IntPtr lParam);
+
+        [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
+        private static extern IntPtr GetModuleHandle(string? lpModuleName);
+
+        [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
+        private static extern IntPtr LoadLibrary(string lpLibFileName);
 
         /// <summary>低级键盘钩子回调委托</summary>
         private delegate IntPtr LowLevelKeyboardProc(int nCode, IntPtr wParam, IntPtr lParam);

@@ -6,7 +6,7 @@ using Snet.Windows.KMSim.utility;
 namespace Snet.Windows.KMSim
 {
     /// <summary>
-    /// Interaction logic for MainWindow.xaml
+    /// 主窗口，初始化编辑器控件和全局键盘钩子，并在窗口关闭时触发退出逻辑。
     /// </summary>
     public partial class MainWindow : WindowBase
     {

@@ -13,7 +13,7 @@ using System.Windows;
 namespace Snet.Windows.KMSim
 {
     /// <summary>
-    /// Interaction logic for App.xaml
+    /// 应用程序入口类，负责全局异常捕捉、依赖注入配置和主窗口启动。
     /// </summary>
     public partial class App : Application
     {
@@ -38,9 +38,10 @@ namespace Snet.Windows.KMSim
         public readonly static List<EditModel> EditModels = GetEditModels();
 
         /// <summary>
-        /// 获取编辑框模型集合
+        /// 获取编辑框模型集合，包含所有内置分隔符说明和 KMSimCore 类中的可用命令。
+        /// 通过反射读取 XML 文档获取方法名称和注释。
         /// </summary>
-        /// <returns></returns>
+        /// <returns>编辑框模型集合</returns>
         private static List<EditModel> GetEditModels()
         {
             List<EditModel> models = new List<EditModel>();
@@ -84,15 +85,18 @@ namespace Snet.Windows.KMSim
         }
 
         /// <summary>
-        /// 在加载应用程序时发生
+        /// 在加载应用程序时发生。
+        /// 注意：GlobalKeyboardHook 必须以预创建实例方式注入（而非类型注入），
+        /// 因为 InjectionWpf.Window 内部会多次重建 ServiceProvider 并 Dispose 旧 Provider，
+        /// 若以类型注入，Provider 销毁时会连带 Dispose 钩子实例导致钩子被卸载。
         /// </summary>
         private void OnStartup(object sender, StartupEventArgs e)
         {
             //启动全局异常捕捉
             RegisterEvents();
 
-            //注入钩子
-            InjectionWpf.AddService(s => s.AddSingleton<GlobalKeyboardHook>());
+            //注入钩子（预创建实例，避免 Provider 重建时被 Dispose）
+            InjectionWpf.AddService(s => s.AddSingleton(new GlobalKeyboardHook()));
 
             //打开主窗口
             InjectionWpf.Window<MainWindow, MainWindowViewModel>(true).Show();
@@ -141,7 +145,10 @@ namespace Snet.Windows.KMSim
             }
         }
 
-        //非UI线程未捕获异常处理事件(例如自己创建的一个子线程)
+        //非UI线程未捕获异常处理事件（例如自己创建的一个子线程）
+        /// <summary>
+        /// 非 UI 线程未捕获异常处理事件，捕获子线程中的未处理异常并记录日志。
+        /// </summary>
         private void CurrentDomain_UnhandledException(object sender, UnhandledExceptionEventArgs e)
         {
             try
@@ -162,7 +169,9 @@ namespace Snet.Windows.KMSim
             }
         }
 
-        //UI线程未捕获异常处理事件（UI主线程）
+        /// <summary>
+        /// UI 线程未捕获异常处理事件（UI 主线程），标记异常已处理以防止应用崩溃。
+        /// </summary>
         private void App_DispatcherUnhandledException(object sender, System.Windows.Threading.DispatcherUnhandledExceptionEventArgs e)
         {
             try
