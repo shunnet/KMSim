@@ -1,10 +1,31 @@
-# <img src="https://api.shunnet.top/pic/nuget.png" height="28"> KMSim  
+<h1 align="center">KMSim</h1>
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)  
-[![Repo](https://img.shields.io/badge/Repository-shunnet/KMSim-blue)](https://github.com/shunnet/KMSim)  
+<p align="center">
+  <img width="120" height="120" src="https://api.shunnet.top/pic/nuget.png" alt="Snet Logo"/>
+</p>
 
-> 🚀 **Windows 平台可编程键鼠模拟器**  
-> 高效、灵活的自动化控制解决方案，适用于测试、批量操作及脚本化控制。
+<p align="center">
+  <b>Windows 平台可编程键鼠模拟器</b>
+</p>
+
+<p align="center">
+
+  <img src="https://img.shields.io/badge/.NET-10.0-blue"/>
+  <img src="https://img.shields.io/badge/platform-Windows-success"/>
+  <img src="https://img.shields.io/badge/license-MIT-green"/>
+  <img src="https://img.shields.io/github/stars/shunnet/KMSim?style=social"/>
+
+</p>
+
+<p align="center">
+  高效、灵活的自动化控制解决方案，适用于测试、批量操作及脚本化控制。
+</p>
+
+<p align="center">
+  <a href="https://shunnet.top"><b>🌐 官方网站</b></a> ·
+  <a href="https://github.com/shunnet/KMSim"><b>📦 GitHub</b></a> ·
+  <a href="https://Shunnet.top/72VRn"><b>🎬 演示视频</b></a>
+</p>
 
 
 ## 📌 项目简介
