@@ -227,6 +227,7 @@
                                     Padding="0"
                                     HorizontalContentAlignment="Center"
                                     Content="{Binding Cpu}"
+                                    ContentStringFormat="{}{0}%"
                                     Foreground="{Binding Cpu_Foreground}" />
                                 <Label
                                     Grid.Column="1"
@@ -234,6 +235,7 @@
                                     Padding="0"
                                     HorizontalContentAlignment="Center"
                                     Content="{Binding Gpu}"
+                                    ContentStringFormat="{}{0}%"
                                     Foreground="{Binding Gpu_Foreground}" />
                                 <Label
                                     Grid.Column="2"
@@ -241,6 +243,7 @@
                                     Padding="0"
                                     HorizontalContentAlignment="Center"
                                     Content="{Binding RAM}"
+                                    ContentStringFormat="{}{0}%"
                                     Foreground="{Binding RAM_Foreground}" />
                             </StackPanel>
 

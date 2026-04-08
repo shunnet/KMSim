@@ -103,7 +103,7 @@ namespace Snet.Windows.KMSim
         /// <summary>
         /// 间隔
         /// </summary>
-        private int _interval = 1000;
+        private int _interval = 100;
         /// <summary>
         /// 锁
         /// </summary>
@@ -368,7 +368,17 @@ EnterAsync
 
 
         #region 监控信息
-        public object Cpu
+        private static readonly System.Windows.Media.SolidColorBrush s_cpuBrush = CreateFrozenBrush("#4CAF50");
+        private static readonly System.Windows.Media.SolidColorBrush s_gpuBrush = CreateFrozenBrush("#F44336");
+        private static readonly System.Windows.Media.SolidColorBrush s_ramBrush = CreateFrozenBrush("#2196F3");
+
+        private static System.Windows.Media.SolidColorBrush CreateFrozenBrush(string hex)
+        {
+            var brush = (System.Windows.Media.SolidColorBrush)new System.Windows.Media.BrushConverter().ConvertFromString(hex);
+            brush.Freeze();
+            return brush;
+        }
+        public double Cpu
         {
             get => GetProperty(() => Cpu);
             set => SetProperty(() => Cpu, value);
@@ -378,9 +388,9 @@ EnterAsync
             get => cpu_Foreground;
             set => SetProperty(ref cpu_Foreground, value);
         }
-        private System.Windows.Media.Brush cpu_Foreground = (System.Windows.Media.Brush)new System.Windows.Media.BrushConverter().ConvertFromString("#4CAF50");
+        private System.Windows.Media.Brush cpu_Foreground = s_cpuBrush;
 
-        public object Gpu
+        public double Gpu
         {
             get => GetProperty(() => Gpu);
             set => SetProperty(() => Gpu, value);
@@ -390,9 +400,9 @@ EnterAsync
             get => gpu_Foreground;
             set => SetProperty(ref gpu_Foreground, value);
         }
-        private System.Windows.Media.Brush gpu_Foreground = (System.Windows.Media.Brush)new System.Windows.Media.BrushConverter().ConvertFromString("#F44336");
+        private System.Windows.Media.Brush gpu_Foreground = s_gpuBrush;
 
-        public object RAM
+        public double RAM
         {
             get => GetProperty(() => RAM);
             set => SetProperty(() => RAM, value);
@@ -402,8 +412,7 @@ EnterAsync
             get => ram_Foreground;
             set => SetProperty(ref ram_Foreground, value);
         }
-        private System.Windows.Media.Brush ram_Foreground = (System.Windows.Media.Brush)new System.Windows.Media.BrushConverter().ConvertFromString("#2196F3");
-
+        private System.Windows.Media.Brush ram_Foreground = s_ramBrush;
         /// <summary>
         /// 定时更新系统硬件监控数值（CPU、GPU、RAM 使用率），并同步更新图表和界面显示。
         /// 使用 PeriodicTimer 替代 Task.Delay 以获得更稳定的定时间隔。
@@ -418,7 +427,7 @@ EnterAsync
                     // 在循环外分配字典，避免每次迭代产生 GC 压力
                     ConcurrentDictionary<string, double> values = new ConcurrentDictionary<string, double>();
 
-                    using var timer = new PeriodicTimer(TimeSpan.FromMilliseconds(_interval));
+                    using var timer = new PeriodicTimer(TimeSpan.FromMilliseconds(_interval * 10));
                     while (await timer.WaitForNextTickAsync(token))
                     {
                         HardwareData hardwareData = systemMonitoring.GetInfo();
@@ -436,7 +445,6 @@ EnterAsync
                                     }
                                 }
                             }
-                            // 修复：「因特尔显卡」-> 「英特尔显卡」（与 GetHardwareNameCn 映射保持一致）
                             if (iteminfolist.Key.Equals("英伟达显卡") || iteminfolist.Key.Equals("英特尔显卡") || iteminfolist.Key.Equals("AMD显卡"))
                             {
                                 foreach (var item in iteminfolist.Values)
@@ -470,13 +478,13 @@ EnterAsync
                                 switch (item.Key)
                                 {
                                     case "Cpu":
-                                        Cpu = $"{value:F2}%";
+                                        Cpu = value;
                                         break;
                                     case "Gpu":
-                                        Gpu = $"{value:F2}%";
+                                        Gpu = value;
                                         break;
                                     case "RAM":
-                                        RAM = $"{value:F2}%";
+                                        RAM = value;
                                         break;
                                 }
                             }
