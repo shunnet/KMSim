@@ -19,6 +19,11 @@ namespace Snet.Windows.KMSim.handler;
 /// </summary>
 public static class CommandHandler
 {
+    /// <summary>
+    /// 换行符分隔数组，避免每次调用时重复分配
+    /// </summary>
+    private static readonly char[] LineBreakChars = ['\r', '\n'];
+
     // 缓存 XML 文档，避免重复加载（使用 ConcurrentDictionary 确保多线程安全）
     private static readonly ConcurrentDictionary<string, XDocument> _xmlCache = new();
 
@@ -123,7 +128,7 @@ public static class CommandHandler
         if (xmlNode == null) return "";
 
         string summary = xmlNode.Element("summary")?.Value ?? "";
-        summary = summary.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries)
+        summary = summary.Split(LineBreakChars, StringSplitOptions.RemoveEmptyEntries)
                          .FirstOrDefault()?.Trim() ?? "";
         return summary;
     }
@@ -188,7 +193,7 @@ public static class CommandHandler
         List<WhileModel> whileList = new();
 
         // 按行拆分并清理注释/空行
-        string[] lines = text.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries)
+        string[] lines = text.Split(LineBreakChars, StringSplitOptions.RemoveEmptyEntries)
                              .Select(l => l.Trim())
                              .Where(l => !string.IsNullOrWhiteSpace(l) && !l.StartsWith("#"))
                              .ToArray();
@@ -305,7 +310,7 @@ public static class CommandHandler
             currentLogicList.Add(new LogicModel
             {
                 MethodName = methodName,
-                Parameters = parameters.Cast<object>().ToArray()
+                Parameters = parameters.ToArray<object>()
             });
         }
 
@@ -348,7 +353,7 @@ public static class CommandHandler
         {
             for (int i = 0; i < parameters.Length; i++)
             {
-                Match match = NestedCallPattern.Match(parameters[i].ToString());
+                Match match = NestedCallPattern.Match(parameters[i]?.ToString() ?? string.Empty);
                 if (match.Success)
                 {
                     // 整个匹配

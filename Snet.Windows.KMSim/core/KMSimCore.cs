@@ -1,4 +1,4 @@
-﻿using Snet.Windows.KMSim.data;
+using Snet.Windows.KMSim.data;
 using System.Text;
 using System.Windows.Input;
 
@@ -16,13 +16,10 @@ namespace Snet.Windows.KMSim.core
         /// <param name="hWnd">句柄</param>
         /// <param name="token">取消通知</param>
         /// <returns>宽度</returns>
-        public async Task<int> GetWindowWidthAsync(IntPtr hWnd, CancellationToken token = default)
+        public Task<int> GetWindowWidthAsync(IntPtr hWnd, CancellationToken token = default)
         {
-            return await Task.Run(() =>
-            {
-                (int Width, int Height) data = Win32.GetWindowSize(hWnd);
-                return data.Width;
-            }, token);
+            (int Width, int Height) data = Win32.GetWindowSize(hWnd);
+            return Task.FromResult(data.Width);
         }
         /// <summary>
         /// 获取窗体的高度
@@ -30,13 +27,10 @@ namespace Snet.Windows.KMSim.core
         /// <param name="hWnd">句柄</param>
         /// <param name="token">取消通知</param>
         /// <returns></returns>
-        public async Task<int> GetWindowHeightAsync(IntPtr hWnd, CancellationToken token = default)
+        public Task<int> GetWindowHeightAsync(IntPtr hWnd, CancellationToken token = default)
         {
-            return await Task.Run(() =>
-            {
-                (int Width, int Height) data = Win32.GetWindowSize(hWnd);
-                return data.Height;
-            }, token);
+            (int Width, int Height) data = Win32.GetWindowSize(hWnd);
+            return Task.FromResult(data.Height);
         }
 
         /// <summary>
@@ -65,8 +59,8 @@ namespace Snet.Windows.KMSim.core
         /// <param name="ms">毫秒</param>
         /// <param name="token">取消通知</param>
         /// <returns></returns>
-        public async Task DelayAsync(int ms, CancellationToken token = default)
-            => await Task.Delay(ms, token);
+        public Task DelayAsync(int ms, CancellationToken token = default)
+            => Task.Delay(ms, token);
 
 
         /// <summary>
@@ -148,8 +142,8 @@ namespace Snet.Windows.KMSim.core
         /// <param name="hWnd">句柄</param>
         /// <param name="top">是否置顶</param>
         /// <param name="token">取消通知</param>
-        public async Task WindowsTopMostAsync(IntPtr hWnd, CancellationToken token = default)
-            => await Task.Run(() => Win32.SetWindowPos(hWnd, Win32.HWND_TOPMOST, 0, 0, 0, 0, Win32.SWP_NOACTIVATE), token);
+        public Task WindowsTopMostAsync(IntPtr hWnd, CancellationToken token = default)
+            => Task.Run(() => Win32.SetWindowPos(hWnd, Win32.HWND_TOPMOST, 0, 0, 0, 0, Win32.SWP_NOACTIVATE), token);
 
         /// <summary>
         /// 移动窗口
@@ -160,8 +154,8 @@ namespace Snet.Windows.KMSim.core
         /// <param name="width">宽</param>
         /// <param name="height">高</param>
         /// <param name="token">取消通知</param>
-        public async Task MoveWindowsAsync(IntPtr hWnd, int x, int y, int width, int height, CancellationToken token = default)
-            => await Task.Run(() => Win32.MoveWindow(hWnd, x, y, width, height, true));
+        public Task MoveWindowsAsync(IntPtr hWnd, int x, int y, int width, int height, CancellationToken token = default)
+            => Task.Run(() => Win32.MoveWindow(hWnd, x, y, width, height, true), token);
 
         #region 鼠标操作
 
@@ -174,7 +168,7 @@ namespace Snet.Windows.KMSim.core
         /// <returns></returns>
         public async Task MouseMoveAsync(int x, int y, CancellationToken token = default)
         {
-            await Task.Run(() => Win32.SetCursorPos(x, y), token);
+            Win32.SetCursorPos(x, y);
             await Task.Delay(ConfigModel.RestTime, token);
         }
 
@@ -213,11 +207,8 @@ namespace Snet.Windows.KMSim.core
         /// </summary>
         public async Task MouseRollerUpAsync(CancellationToken token = default)
         {
-            await Task.Run(async () =>
-            {
-                Win32.mouse_event(Win32.MOUSEEVENTF_WHEEL, 0, 0, 100, 0);
-                await Task.Delay(ConfigModel.RestTime * 20, token);
-            }, token);
+            Win32.mouse_event(Win32.MOUSEEVENTF_WHEEL, 0, 0, 100, 0);
+            await Task.Delay(ConfigModel.RestTime * 20, token);
         }
 
         /// <summary>
@@ -225,59 +216,62 @@ namespace Snet.Windows.KMSim.core
         /// </summary>
         public async Task MouseRollerDownAsync(CancellationToken token = default)
         {
-            await Task.Run(async () =>
-            {
-                Win32.mouse_event(Win32.MOUSEEVENTF_WHEEL, 0, 0, -100, 0);
-                await Task.Delay(ConfigModel.RestTime * 20, token);
-            }, token);
+            Win32.mouse_event(Win32.MOUSEEVENTF_WHEEL, 0, 0, -100, 0);
+            await Task.Delay(ConfigModel.RestTime * 20, token);
         }
 
         /// <summary>
         /// 鼠标左键按下
         /// </summary>
-        public async Task MouseLeftDownAsync(CancellationToken token = default)
+        public Task MouseLeftDownAsync(CancellationToken token = default)
         {
-            await Task.Run(() => Win32.mouse_event(Win32.MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0), token);
+            Win32.mouse_event(Win32.MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0);
+            return Task.CompletedTask;
         }
 
         /// <summary>
         /// 鼠标左键松开
         /// </summary>
-        public async Task MouseLeftUpAsync(CancellationToken token = default)
+        public Task MouseLeftUpAsync(CancellationToken token = default)
         {
-            await Task.Run(() => Win32.mouse_event(Win32.MOUSEEVENTF_LEFTUP, 0, 0, 0, 0), token);
+            Win32.mouse_event(Win32.MOUSEEVENTF_LEFTUP, 0, 0, 0, 0);
+            return Task.CompletedTask;
         }
 
         /// <summary>
         /// 鼠标右键按下
         /// </summary>
-        public async Task MouseRightDownAsync(CancellationToken token = default)
+        public Task MouseRightDownAsync(CancellationToken token = default)
         {
-            await Task.Run(() => Win32.mouse_event(Win32.MOUSEEVENTF_RIGHTDOWN, 0, 0, 0, 0), token);
+            Win32.mouse_event(Win32.MOUSEEVENTF_RIGHTDOWN, 0, 0, 0, 0);
+            return Task.CompletedTask;
         }
 
         /// <summary>
         /// 鼠标右键松开
         /// </summary>
-        public async Task MouseRightUpAsync(CancellationToken token = default)
+        public Task MouseRightUpAsync(CancellationToken token = default)
         {
-            await Task.Run(() => Win32.mouse_event(Win32.MOUSEEVENTF_RIGHTUP, 0, 0, 0, 0), token);
+            Win32.mouse_event(Win32.MOUSEEVENTF_RIGHTUP, 0, 0, 0, 0);
+            return Task.CompletedTask;
         }
 
         /// <summary>
         /// 鼠标中键按下
         /// </summary>
-        public async Task MouseMiddleDownAsync(CancellationToken token = default)
+        public Task MouseMiddleDownAsync(CancellationToken token = default)
         {
-            await Task.Run(() => Win32.mouse_event(Win32.MOUSEEVENTF_MIDDLEDOWN, 0, 0, 0, 0), token);
+            Win32.mouse_event(Win32.MOUSEEVENTF_MIDDLEDOWN, 0, 0, 0, 0);
+            return Task.CompletedTask;
         }
 
         /// <summary>
         /// 鼠标中键松开
         /// </summary>
-        public async Task MouseMiddleUpAsync(CancellationToken token = default)
+        public Task MouseMiddleUpAsync(CancellationToken token = default)
         {
-            await Task.Run(() => Win32.mouse_event(Win32.MOUSEEVENTF_MIDDLEUP, 0, 0, 0, 0), token);
+            Win32.mouse_event(Win32.MOUSEEVENTF_MIDDLEUP, 0, 0, 0, 0);
+            return Task.CompletedTask;
         }
         #endregion
 
@@ -309,8 +303,8 @@ namespace Snet.Windows.KMSim.core
         /// </summary>
         /// <param name="token">可选的取消令牌，用于取消操作</param>
         /// <returns>目标状态：true 表示开启大写锁定，false 表示关闭大写锁定</returns>
-        public async Task<bool> GetToggleCaseStatusAsync(CancellationToken token = default)
-            => await GetKeyStateAsync(Key.CapsLock, token);
+        public Task<bool> GetToggleCaseStatusAsync(CancellationToken token = default)
+            => GetKeyStateAsync(Key.CapsLock, token);
 
         /// <summary>
         /// 执行复制操作（Ctrl + C）
@@ -321,8 +315,8 @@ namespace Snet.Windows.KMSim.core
         /// 2. 适用于选中文本或文件后自动复制到剪贴板的场景；
         /// 3. 会调用 KeyboardPressAsync 方法处理按下、松开事件，确保操作稳定。
         /// </remarks>
-        public async Task CopyAsync(CancellationToken token = default)
-            => await KeyboardPressAsync(Key.LeftCtrl, Key.C, token);
+        public Task CopyAsync(CancellationToken token = default)
+            => KeyboardPressAsync(Key.LeftCtrl, Key.C, token);
 
         /// <summary>
         /// 执行保存操作（Ctrl + S）
@@ -333,8 +327,8 @@ namespace Snet.Windows.KMSim.core
         /// 2. 适用于自动化保存功能，例如定时保存文档或编辑内容；
         /// 3. 使用 KeyboardPressAsync 方法保证按键顺序和时长正确。
         /// </remarks>
-        public async Task SaveAsync(CancellationToken token = default)
-            => await KeyboardPressAsync(Key.LeftCtrl, Key.S, token);
+        public Task SaveAsync(CancellationToken token = default)
+            => KeyboardPressAsync(Key.LeftCtrl, Key.S, token);
 
         /// <summary>
         /// 执行粘贴操作（Ctrl + V）
@@ -345,8 +339,8 @@ namespace Snet.Windows.KMSim.core
         /// 2. 适用于自动化文本输入、文件路径粘贴等场景；
         /// 3. KeyboardPressAsync 方法会自动处理按下、松开逻辑，确保粘贴成功。
         /// </remarks>
-        public async Task PasteAsync(CancellationToken token = default)
-            => await KeyboardPressAsync(Key.LeftCtrl, Key.V, token);
+        public Task PasteAsync(CancellationToken token = default)
+            => KeyboardPressAsync(Key.LeftCtrl, Key.V, token);
 
         /// <summary>
         /// 执行全选操作（Ctrl + A）
@@ -357,8 +351,8 @@ namespace Snet.Windows.KMSim.core
         /// 2. 适用于自动化文本编辑、批量操作或数据处理场景；
         /// 3. KeyboardPressAsync 方法会自动处理按下、松开事件，确保全选动作生效。
         /// </remarks>
-        public async Task SelectAllAsync(CancellationToken token = default)
-            => await KeyboardPressAsync(Key.LeftCtrl, Key.A, token);
+        public Task SelectAllAsync(CancellationToken token = default)
+            => KeyboardPressAsync(Key.LeftCtrl, Key.A, token);
 
         #region 键盘其余按键
         /// <summary>
@@ -366,576 +360,576 @@ namespace Snet.Windows.KMSim.core
         /// 该方法会模拟按下并松开回车键，通常用于触发提交或确认操作。</summary>
         /// <param name="token">取消令牌，用于取消操作。</param>
         /// <returns>表示操作的任务。</returns>
-        public async Task EnterAsync(CancellationToken token = default)
-            => await KeyboardPressAsync(Key.Enter, token);
+        public Task EnterAsync(CancellationToken token = default)
+            => KeyboardPressAsync(Key.Enter, token);
 
         /// <summary>
         /// 按下回车<br/>
         /// 该方法会模拟按下回车键，通常用于触发提交或确认操作。</summary>
         /// <param name="token">取消令牌，用于取消操作。</param>
         /// <returns>表示操作的任务。</returns>
-        public async Task EnterPressAsync(CancellationToken token = default)
-            => await KeyboardPressKeyAsync(Key.Enter, token);
+        public Task EnterPressAsync(CancellationToken token = default)
+            => KeyboardPressKeyAsync(Key.Enter, token);
 
         /// <summary>
         /// 松开回车<br/>
         /// 该方法会模拟松开回车键，通常用于释放按键。</summary>
         /// <param name="token">取消令牌，用于取消操作。</param>
         /// <returns>表示操作的任务。</returns>
-        public async Task EnterLoosenAsync(CancellationToken token = default)
-            => await KeyboardLoosenKeyAsync(Key.Enter, token);
+        public Task EnterLoosenAsync(CancellationToken token = default)
+            => KeyboardLoosenKeyAsync(Key.Enter, token);
 
         /// <summary>
         /// 按下并松开Tab<br/>
         /// 该方法会模拟按下并松开Tab键，通常用于在控件之间切换焦点。</summary>
         /// <param name="token">取消令牌，用于取消操作。</param>
         /// <returns>表示操作的任务。</returns>
-        public async Task TabAsync(CancellationToken token = default)
-            => await KeyboardPressAsync(Key.Tab, token);
+        public Task TabAsync(CancellationToken token = default)
+            => KeyboardPressAsync(Key.Tab, token);
 
         /// <summary>
         /// 按下Tab<br/>
         /// 该方法会模拟按下Tab键，通常用于在控件之间切换焦点。</summary>
         /// <param name="token">取消令牌，用于取消操作。</param>
         /// <returns>表示操作的任务。</returns>
-        public async Task TabPressAsync(CancellationToken token = default)
-            => await KeyboardPressKeyAsync(Key.Tab, token);
+        public Task TabPressAsync(CancellationToken token = default)
+            => KeyboardPressKeyAsync(Key.Tab, token);
 
         /// <summary>
         /// 松开Tab<br/>
         /// 该方法会模拟松开Tab键，通常用于释放按键。</summary>
         /// <param name="token">取消令牌，用于取消操作。</param>
         /// <returns>表示操作的任务。</returns>
-        public async Task TabLoosenAsync(CancellationToken token = default)
-            => await KeyboardLoosenKeyAsync(Key.Tab, token);
+        public Task TabLoosenAsync(CancellationToken token = default)
+            => KeyboardLoosenKeyAsync(Key.Tab, token);
 
         /// <summary>
         /// 按下并松开CapsLock<br/>
         /// 该方法会模拟按下并松开CapsLock键，通常用于开启或关闭大写字母锁定。</summary>
         /// <param name="token">取消令牌，用于取消操作。</param>
         /// <returns>表示操作的任务。</returns>
-        public async Task CapsLockAsync(CancellationToken token = default)
-            => await KeyboardPressAsync(Key.CapsLock, token);
+        public Task CapsLockAsync(CancellationToken token = default)
+            => KeyboardPressAsync(Key.CapsLock, token);
 
         /// <summary>
         /// 按下CapsLock<br/>
         /// 该方法会模拟按下CapsLock键，通常用于开启或关闭大写字母锁定。</summary>
         /// <param name="token">取消令牌，用于取消操作。</param>
         /// <returns>表示操作的任务。</returns>
-        public async Task CapsLockPressAsync(CancellationToken token = default)
-            => await KeyboardPressKeyAsync(Key.CapsLock, token);
+        public Task CapsLockPressAsync(CancellationToken token = default)
+            => KeyboardPressKeyAsync(Key.CapsLock, token);
 
         /// <summary>
         /// 松开CapsLock<br/>
         /// 该方法会模拟松开CapsLock键，通常用于释放按键。</summary>
         /// <param name="token">取消令牌，用于取消操作。</param>
         /// <returns>表示操作的任务。</returns>
-        public async Task CapsLockLoosenAsync(CancellationToken token = default)
-            => await KeyboardLoosenKeyAsync(Key.CapsLock, token);
+        public Task CapsLockLoosenAsync(CancellationToken token = default)
+            => KeyboardLoosenKeyAsync(Key.CapsLock, token);
 
         /// <summary>
         /// 按下并松开回退键<br/>
         /// 该方法会模拟按下并松开回退键，通常用于删除光标前的一个字符。</summary>
         /// <param name="token">取消令牌，用于取消操作。</param>
         /// <returns>表示操作的任务。</returns>
-        public async Task BackAsync(CancellationToken token = default)
-            => await KeyboardPressAsync(Key.Back, token);
+        public Task BackAsync(CancellationToken token = default)
+            => KeyboardPressAsync(Key.Back, token);
 
         /// <summary>
         /// 按下回退键<br/>
         /// 该方法会模拟按下回退键，通常用于删除光标前的一个字符。</summary>
         /// <param name="token">取消令牌，用于取消操作。</param>
         /// <returns>表示操作的任务。</returns>
-        public async Task BackPressAsync(CancellationToken token = default)
-            => await KeyboardPressKeyAsync(Key.Back, token);
+        public Task BackPressAsync(CancellationToken token = default)
+            => KeyboardPressKeyAsync(Key.Back, token);
 
         /// <summary>
         /// 松开回退键<br/>
         /// 该方法会模拟松开回退键，通常用于释放按键。</summary>
         /// <param name="token">取消令牌，用于取消操作。</param>
         /// <returns>表示操作的任务。</returns>
-        public async Task BackLoosenAsync(CancellationToken token = default)
-            => await KeyboardLoosenKeyAsync(Key.Back, token);
+        public Task BackLoosenAsync(CancellationToken token = default)
+            => KeyboardLoosenKeyAsync(Key.Back, token);
 
         /// <summary>
         /// 按下并松开空格<br/>
         /// 该方法会模拟按下并松开空格键，通常用于在输入框中插入空格。</summary>
         /// <param name="token">取消令牌，用于取消操作。</param>
         /// <returns>表示操作的任务。</returns>
-        public async Task SpaceAsync(CancellationToken token = default)
-            => await KeyboardPressAsync(Key.Space, token);
+        public Task SpaceAsync(CancellationToken token = default)
+            => KeyboardPressAsync(Key.Space, token);
 
         /// <summary>
         /// 按下空格<br/>
         /// 该方法会模拟按下空格键，通常用于在输入框中插入空格。</summary>
         /// <param name="token">取消令牌，用于取消操作。</param>
         /// <returns>表示操作的任务。</returns>
-        public async Task SpacePressAsync(CancellationToken token = default)
-            => await KeyboardPressKeyAsync(Key.Space, token);
+        public Task SpacePressAsync(CancellationToken token = default)
+            => KeyboardPressKeyAsync(Key.Space, token);
 
         /// <summary>
         /// 松开空格<br/>
         /// 该方法会模拟松开空格键，通常用于释放按键。</summary>
         /// <param name="token">取消令牌，用于取消操作。</param>
         /// <returns>表示操作的任务。</returns>
-        public async Task SpaceLoosenAsync(CancellationToken token = default)
-            => await KeyboardLoosenKeyAsync(Key.Space, token);
+        public Task SpaceLoosenAsync(CancellationToken token = default)
+            => KeyboardLoosenKeyAsync(Key.Space, token);
 
         /// <summary>
         /// 按下并松开左Ctrl<br/>
         /// 该方法会模拟按下并松开左侧Ctrl键，通常用于与其他键组合触发操作。</summary>
         /// <param name="token">取消令牌，用于取消操作。</param>
         /// <returns>表示操作的任务。</returns>
-        public async Task LeftCtrlAsync(CancellationToken token = default)
-            => await KeyboardPressAsync(Key.LeftCtrl, token);
+        public Task LeftCtrlAsync(CancellationToken token = default)
+            => KeyboardPressAsync(Key.LeftCtrl, token);
 
         /// <summary>
         /// 按下左Ctrl<br/>
         /// 该方法会模拟按下左侧Ctrl键，通常用于与其他键组合触发操作。</summary>
         /// <param name="token">取消令牌，用于取消操作。</param>
         /// <returns>表示操作的任务。</returns>
-        public async Task LeftCtrlPressAsync(CancellationToken token = default)
-            => await KeyboardPressKeyAsync(Key.LeftCtrl, token);
+        public Task LeftCtrlPressAsync(CancellationToken token = default)
+            => KeyboardPressKeyAsync(Key.LeftCtrl, token);
 
         /// <summary>
         /// 松开左Ctrl<br/>
         /// 该方法会模拟松开左侧Ctrl键，通常用于释放按键。</summary>
         /// <param name="token">取消令牌，用于取消操作。</param>
         /// <returns>表示操作的任务。</returns>
-        public async Task LeftCtrlLoosenAsync(CancellationToken token = default)
-            => await KeyboardLoosenKeyAsync(Key.LeftCtrl, token);
+        public Task LeftCtrlLoosenAsync(CancellationToken token = default)
+            => KeyboardLoosenKeyAsync(Key.LeftCtrl, token);
 
         /// <summary>
         /// 按下并松开右Ctrl<br/>
         /// 该方法会模拟按下并松开右侧Ctrl键，通常用于与其他键组合触发操作。</summary>
         /// <param name="token">取消令牌，用于取消操作。</param>
         /// <returns>表示操作的任务。</returns>
-        public async Task RightCtrlAsync(CancellationToken token = default)
-            => await KeyboardPressAsync(Key.RightCtrl, token);
+        public Task RightCtrlAsync(CancellationToken token = default)
+            => KeyboardPressAsync(Key.RightCtrl, token);
 
         /// <summary>
         /// 按下右Ctrl<br/>
         /// 该方法会模拟按下右侧Ctrl键，通常用于与其他键组合触发操作。</summary>
         /// <param name="token">取消令牌，用于取消操作。</param>
         /// <returns>表示操作的任务。</returns>
-        public async Task RightCtrlPressAsync(CancellationToken token = default)
-            => await KeyboardPressKeyAsync(Key.RightCtrl, token);
+        public Task RightCtrlPressAsync(CancellationToken token = default)
+            => KeyboardPressKeyAsync(Key.RightCtrl, token);
 
         /// <summary>
         /// 松开右Ctrl<br/>
         /// 该方法会模拟松开右侧Ctrl键，通常用于释放按键。</summary>
         /// <param name="token">取消令牌，用于取消操作。</param>
         /// <returns>表示操作的任务。</returns>
-        public async Task RightCtrlLoosenAsync(CancellationToken token = default)
-            => await KeyboardLoosenKeyAsync(Key.RightCtrl, token);
+        public Task RightCtrlLoosenAsync(CancellationToken token = default)
+            => KeyboardLoosenKeyAsync(Key.RightCtrl, token);
 
         /// <summary>
         /// 按下并松开左Win<br/>
         /// 该方法会模拟按下并松开左侧Win键，通常用于打开开始菜单或触发Win键组合操作。</summary>
         /// <param name="token">取消令牌，用于取消操作。</param>
         /// <returns>表示操作的任务。</returns>
-        public async Task LWinAsync(CancellationToken token = default)
-            => await KeyboardPressAsync(Key.LWin, token);
+        public Task LWinAsync(CancellationToken token = default)
+            => KeyboardPressAsync(Key.LWin, token);
 
         /// <summary>
         /// 按下左Win<br/>
         /// 该方法会模拟按下左侧Win键，通常用于打开开始菜单或触发Win键组合操作。</summary>
         /// <param name="token">取消令牌，用于取消操作。</param>
         /// <returns>表示操作的任务。</returns>
-        public async Task LWinPressAsync(CancellationToken token = default)
-            => await KeyboardPressKeyAsync(Key.LWin, token);
+        public Task LWinPressAsync(CancellationToken token = default)
+            => KeyboardPressKeyAsync(Key.LWin, token);
 
         /// <summary>
         /// 松开左Win<br/>
         /// 该方法会模拟松开左侧Win键，通常用于释放按键。</summary>
         /// <param name="token">取消令牌，用于取消操作。</param>
         /// <returns>表示操作的任务。</returns>
-        public async Task LWinLoosenAsync(CancellationToken token = default)
-            => await KeyboardLoosenKeyAsync(Key.LWin, token);
+        public Task LWinLoosenAsync(CancellationToken token = default)
+            => KeyboardLoosenKeyAsync(Key.LWin, token);
 
         /// <summary>
         /// 按下并松开右Win<br/>
         /// 该方法会模拟按下并松开右侧Win键，通常用于触发Win键组合操作。</summary>
         /// <param name="token">取消令牌，用于取消操作。</param>
         /// <returns>表示操作的任务。</returns>
-        public async Task RWinAsync(CancellationToken token = default)
-            => await KeyboardPressAsync(Key.RWin, token);
+        public Task RWinAsync(CancellationToken token = default)
+            => KeyboardPressAsync(Key.RWin, token);
 
         /// <summary>
         /// 按下右Win<br/>
         /// 该方法会模拟按下右侧Win键，通常用于触发Win键组合操作。</summary>
         /// <param name="token">取消令牌，用于取消操作。</param>
         /// <returns>表示操作的任务。</returns>
-        public async Task RWinPressAsync(CancellationToken token = default)
-            => await KeyboardPressKeyAsync(Key.RWin, token);
+        public Task RWinPressAsync(CancellationToken token = default)
+            => KeyboardPressKeyAsync(Key.RWin, token);
 
         /// <summary>
         /// 松开右Win<br/>
         /// 该方法会模拟松开右侧Win键，通常用于释放按键。</summary>
         /// <param name="token">取消令牌，用于取消操作。</param>
         /// <returns>表示操作的任务。</returns>
-        public async Task RWinLoosenAsync(CancellationToken token = default)
-            => await KeyboardLoosenKeyAsync(Key.RWin, token);
+        public Task RWinLoosenAsync(CancellationToken token = default)
+            => KeyboardLoosenKeyAsync(Key.RWin, token);
 
         /// <summary>
         /// 按下并松开左Alt<br/>
         /// 该方法会模拟按下并松开左侧Alt键，通常用于与其他键组合触发操作。</summary>
         /// <param name="token">取消令牌，用于取消操作。</param>
         /// <returns>表示操作的任务。</returns>
-        public async Task LeftAltAsync(CancellationToken token = default)
-            => await KeyboardPressAsync(Key.LeftAlt, token);
+        public Task LeftAltAsync(CancellationToken token = default)
+            => KeyboardPressAsync(Key.LeftAlt, token);
 
         /// <summary>
         /// 按下左Alt<br/>
         /// 该方法会模拟按下左侧Alt键，通常用于与其他键组合触发操作。</summary>
         /// <param name="token">取消令牌，用于取消操作。</param>
         /// <returns>表示操作的任务。</returns>
-        public async Task LeftAltPressAsync(CancellationToken token = default)
-            => await KeyboardPressKeyAsync(Key.LeftAlt, token);
+        public Task LeftAltPressAsync(CancellationToken token = default)
+            => KeyboardPressKeyAsync(Key.LeftAlt, token);
 
         /// <summary>
         /// 松开左Alt<br/>
         /// 该方法会模拟松开左侧Alt键，通常用于释放按键。</summary>
         /// <param name="token">取消令牌，用于取消操作。</param>
         /// <returns>表示操作的任务。</returns>
-        public async Task LeftAltLoosenAsync(CancellationToken token = default)
-            => await KeyboardLoosenKeyAsync(Key.LeftAlt, token);
+        public Task LeftAltLoosenAsync(CancellationToken token = default)
+            => KeyboardLoosenKeyAsync(Key.LeftAlt, token);
 
         /// <summary>
         /// 按下并松开右Alt<br/>
         /// 该方法会模拟按下并松开右侧Alt键，通常用于与其他键组合触发操作。</summary>
         /// <param name="token">取消令牌，用于取消操作。</param>
         /// <returns>表示操作的任务。</returns>
-        public async Task RightAltAsync(CancellationToken token = default)
-            => await KeyboardPressAsync(Key.RightAlt, token);
+        public Task RightAltAsync(CancellationToken token = default)
+            => KeyboardPressAsync(Key.RightAlt, token);
 
         /// <summary>
         /// 按下右Alt<br/>
         /// 该方法会模拟按下右侧Alt键，通常用于与其他键组合触发操作。</summary>
         /// <param name="token">取消令牌，用于取消操作。</param>
         /// <returns>表示操作的任务。</returns>
-        public async Task RightAltPressAsync(CancellationToken token = default)
-            => await KeyboardPressKeyAsync(Key.RightAlt, token);
+        public Task RightAltPressAsync(CancellationToken token = default)
+            => KeyboardPressKeyAsync(Key.RightAlt, token);
 
         /// <summary>
         /// 松开右Alt<br/>
         /// 该方法会模拟松开右侧Alt键，通常用于释放按键。</summary>
         /// <param name="token">取消令牌，用于取消操作。</param>
         /// <returns>表示操作的任务。</returns>
-        public async Task RightAltLoosenAsync(CancellationToken token = default)
-            => await KeyboardLoosenKeyAsync(Key.RightAlt, token);
+        public Task RightAltLoosenAsync(CancellationToken token = default)
+            => KeyboardLoosenKeyAsync(Key.RightAlt, token);
 
         /// <summary>
         /// 按下并松开Delete<br/>
         /// 该方法会模拟按下并松开Delete键，通常用于删除光标后的字符或选中内容。</summary>
         /// <param name="token">取消令牌，用于取消操作。</param>
         /// <returns>表示操作的任务。</returns>
-        public async Task DeleteAsync(CancellationToken token = default)
-            => await KeyboardPressAsync(Key.Delete, token);
+        public Task DeleteAsync(CancellationToken token = default)
+            => KeyboardPressAsync(Key.Delete, token);
 
         /// <summary>
         /// 按下Delete<br/>
         /// 该方法会模拟按下Delete键，通常用于删除光标后的字符或选中内容。</summary>
         /// <param name="token">取消令牌，用于取消操作。</param>
         /// <returns>表示操作的任务。</returns>
-        public async Task DeletePressAsync(CancellationToken token = default)
-            => await KeyboardPressKeyAsync(Key.Delete, token);
+        public Task DeletePressAsync(CancellationToken token = default)
+            => KeyboardPressKeyAsync(Key.Delete, token);
 
         /// <summary>
         /// 松开Delete<br/>
         /// 该方法会模拟松开Delete键，通常用于释放按键。</summary>
         /// <param name="token">取消令牌，用于取消操作。</param>
         /// <returns>表示操作的任务。</returns>
-        public async Task DeleteLoosenAsync(CancellationToken token = default)
-            => await KeyboardLoosenKeyAsync(Key.Delete, token);
+        public Task DeleteLoosenAsync(CancellationToken token = default)
+            => KeyboardLoosenKeyAsync(Key.Delete, token);
 
         /// <summary>
         /// 按下并松开Apps（菜单键）<br/>
         /// 该方法会模拟按下并松开Apps键，通常用于打开上下文菜单。</summary>
         /// <param name="token">取消令牌，用于取消操作。</param>
         /// <returns>表示操作的任务。</returns>
-        public async Task AppsAsync(CancellationToken token = default)
-            => await KeyboardPressAsync(Key.Apps, token);
+        public Task AppsAsync(CancellationToken token = default)
+            => KeyboardPressAsync(Key.Apps, token);
 
         /// <summary>
         /// 按下Apps（菜单键）<br/>
         /// 该方法会模拟按下Apps键，通常用于打开上下文菜单。</summary>
         /// <param name="token">取消令牌，用于取消操作。</param>
         /// <returns>表示操作的任务。</returns>
-        public async Task AppsPressAsync(CancellationToken token = default)
-            => await KeyboardPressKeyAsync(Key.Apps, token);
+        public Task AppsPressAsync(CancellationToken token = default)
+            => KeyboardPressKeyAsync(Key.Apps, token);
 
         /// <summary>
         /// 松开Apps（菜单键）<br/>
         /// 该方法会模拟松开Apps键，通常用于释放按键。</summary>
         /// <param name="token">取消令牌，用于取消操作。</param>
         /// <returns>表示操作的任务。</returns>
-        public async Task AppsLoosenAsync(CancellationToken token = default)
-            => await KeyboardLoosenKeyAsync(Key.Apps, token);
+        public Task AppsLoosenAsync(CancellationToken token = default)
+            => KeyboardLoosenKeyAsync(Key.Apps, token);
 
         /// <summary>
         /// 按下并松开PageUp<br/>
         /// 该方法会模拟按下并松开PageUp键，通常用于向上翻页操作。</summary>
         /// <param name="token">取消令牌，用于取消操作。</param>
         /// <returns>表示操作的任务。</returns>
-        public async Task PageUpAsync(CancellationToken token = default)
-            => await KeyboardPressAsync(Key.PageUp, token);
+        public Task PageUpAsync(CancellationToken token = default)
+            => KeyboardPressAsync(Key.PageUp, token);
 
         /// <summary>
         /// 按下PageUp<br/>
         /// 该方法会模拟按下PageUp键，通常用于向上翻页操作。</summary>
         /// <param name="token">取消令牌，用于取消操作。</param>
         /// <returns>表示操作的任务。</returns>
-        public async Task PageUpPressAsync(CancellationToken token = default)
-            => await KeyboardPressKeyAsync(Key.PageUp, token);
+        public Task PageUpPressAsync(CancellationToken token = default)
+            => KeyboardPressKeyAsync(Key.PageUp, token);
 
         /// <summary>
         /// 松开PageUp<br/>
         /// 该方法会模拟松开PageUp键，通常用于释放按键。</summary>
         /// <param name="token">取消令牌，用于取消操作。</param>
         /// <returns>表示操作的任务。</returns>
-        public async Task PageUpLoosenAsync(CancellationToken token = default)
-            => await KeyboardLoosenKeyAsync(Key.PageUp, token);
+        public Task PageUpLoosenAsync(CancellationToken token = default)
+            => KeyboardLoosenKeyAsync(Key.PageUp, token);
 
         /// <summary>
         /// 按下并松开PageDown<br/>
         /// 该方法会模拟按下并松开PageDown键，通常用于向下翻页操作。</summary>
         /// <param name="token">取消令牌，用于取消操作。</param>
         /// <returns>表示操作的任务。</returns>
-        public async Task PageDownAsync(CancellationToken token = default)
-            => await KeyboardPressAsync(Key.PageDown, token);
+        public Task PageDownAsync(CancellationToken token = default)
+            => KeyboardPressAsync(Key.PageDown, token);
 
         /// <summary>
         /// 按下PageDown<br/>
         /// 该方法会模拟按下PageDown键，通常用于向下翻页操作。</summary>
         /// <param name="token">取消令牌，用于取消操作。</param>
         /// <returns>表示操作的任务。</returns>
-        public async Task PageDownPressAsync(CancellationToken token = default)
-            => await KeyboardPressKeyAsync(Key.PageDown, token);
+        public Task PageDownPressAsync(CancellationToken token = default)
+            => KeyboardPressKeyAsync(Key.PageDown, token);
 
         /// <summary>
         /// 松开PageDown<br/>
         /// 该方法会模拟松开PageDown键，通常用于释放按键。</summary>
         /// <param name="token">取消令牌，用于取消操作。</param>
         /// <returns>表示操作的任务。</returns>
-        public async Task PageDownLoosenAsync(CancellationToken token = default)
-            => await KeyboardLoosenKeyAsync(Key.PageDown, token);
+        public Task PageDownLoosenAsync(CancellationToken token = default)
+            => KeyboardLoosenKeyAsync(Key.PageDown, token);
 
         /// <summary>
         /// 按下并松开Insert<br/>
         /// 该方法会模拟按下并松开Insert键，通常用于切换插入/覆盖模式。</summary>
         /// <param name="token">取消令牌，用于取消操作。</param>
         /// <returns>表示操作的任务。</returns>
-        public async Task InsertAsync(CancellationToken token = default)
-            => await KeyboardPressAsync(Key.Insert, token);
+        public Task InsertAsync(CancellationToken token = default)
+            => KeyboardPressAsync(Key.Insert, token);
 
         /// <summary>
         /// 按下Insert<br/>
         /// 该方法会模拟按下Insert键，通常用于切换插入/覆盖模式。</summary>
         /// <param name="token">取消令牌，用于取消操作。</param>
         /// <returns>表示操作的任务。</returns>
-        public async Task InsertPressAsync(CancellationToken token = default)
-            => await KeyboardPressKeyAsync(Key.Insert, token);
+        public Task InsertPressAsync(CancellationToken token = default)
+            => KeyboardPressKeyAsync(Key.Insert, token);
 
         /// <summary>
         /// 松开Insert<br/>
         /// 该方法会模拟松开Insert键，通常用于释放按键。</summary>
         /// <param name="token">取消令牌，用于取消操作。</param>
         /// <returns>表示操作的任务。</returns>
-        public async Task InsertLoosenAsync(CancellationToken token = default)
-            => await KeyboardLoosenKeyAsync(Key.Insert, token);
+        public Task InsertLoosenAsync(CancellationToken token = default)
+            => KeyboardLoosenKeyAsync(Key.Insert, token);
 
         /// <summary>
         /// 按下并松开Home<br/>
         /// 该方法会模拟按下并松开Home键，通常用于将光标移动到行首或页面顶部。</summary>
         /// <param name="token">取消令牌，用于取消操作。</param>
         /// <returns>表示操作的任务。</returns>
-        public async Task HomeAsync(CancellationToken token = default)
-            => await KeyboardPressAsync(Key.Home, token);
+        public Task HomeAsync(CancellationToken token = default)
+            => KeyboardPressAsync(Key.Home, token);
 
         /// <summary>
         /// 按下Home<br/>
         /// 该方法会模拟按下Home键，通常用于将光标移动到行首或页面顶部。</summary>
         /// <param name="token">取消令牌，用于取消操作。</param>
         /// <returns>表示操作的任务。</returns>
-        public async Task HomePressAsync(CancellationToken token = default)
-            => await KeyboardPressKeyAsync(Key.Home, token);
+        public Task HomePressAsync(CancellationToken token = default)
+            => KeyboardPressKeyAsync(Key.Home, token);
 
         /// <summary>
         /// 松开Home<br/>
         /// 该方法会模拟松开Home键，通常用于释放按键。</summary>
         /// <param name="token">取消令牌，用于取消操作。</param>
         /// <returns>表示操作的任务。</returns>
-        public async Task HomeLoosenAsync(CancellationToken token = default)
-            => await KeyboardLoosenKeyAsync(Key.Home, token);
+        public Task HomeLoosenAsync(CancellationToken token = default)
+            => KeyboardLoosenKeyAsync(Key.Home, token);
 
         /// <summary>
         /// 按下并松开End<br/>
         /// 该方法会模拟按下并松开End键，通常用于将光标移动到行尾或页面底部。</summary>
         /// <param name="token">取消令牌，用于取消操作。</param>
         /// <returns>表示操作的任务。</returns>
-        public async Task EndAsync(CancellationToken token = default)
-            => await KeyboardPressAsync(Key.End, token);
+        public Task EndAsync(CancellationToken token = default)
+            => KeyboardPressAsync(Key.End, token);
 
         /// <summary>
         /// 按下End<br/>
         /// 该方法会模拟按下End键，通常用于将光标移动到行尾或页面底部。</summary>
         /// <param name="token">取消令牌，用于取消操作。</param>
         /// <returns>表示操作的任务。</returns>
-        public async Task EndPressAsync(CancellationToken token = default)
-            => await KeyboardPressKeyAsync(Key.End, token);
+        public Task EndPressAsync(CancellationToken token = default)
+            => KeyboardPressKeyAsync(Key.End, token);
 
         /// <summary>
         /// 松开End<br/>
         /// 该方法会模拟松开End键，通常用于释放按键。</summary>
         /// <param name="token">取消令牌，用于取消操作。</param>
         /// <returns>表示操作的任务。</returns>
-        public async Task EndLoosenAsync(CancellationToken token = default)
-            => await KeyboardLoosenKeyAsync(Key.End, token);
+        public Task EndLoosenAsync(CancellationToken token = default)
+            => KeyboardLoosenKeyAsync(Key.End, token);
 
         /// <summary>
         /// 按下并松开小键盘Enter<br/>
         /// 该方法会模拟按下并松开小键盘Enter键，通常用于数字输入或小键盘操作。</summary>
         /// <param name="token">取消令牌，用于取消操作。</param>
         /// <returns>表示操作的任务。</returns>
-        public async Task NumEnterAsync(CancellationToken token = default)
-            => await KeyboardPressAsync(Key.Enter, token);
+        public Task NumEnterAsync(CancellationToken token = default)
+            => KeyboardPressAsync(Key.Enter, token);
 
         /// <summary>
         /// 按下小键盘Enter<br/>
         /// 该方法会模拟按下小键盘Enter键，通常用于数字输入或小键盘操作。</summary>
         /// <param name="token">取消令牌，用于取消操作。</param>
         /// <returns>表示操作的任务。</returns>
-        public async Task NumEnterPressAsync(CancellationToken token = default)
-            => await KeyboardPressKeyAsync(Key.Enter, token);
+        public Task NumEnterPressAsync(CancellationToken token = default)
+            => KeyboardPressKeyAsync(Key.Enter, token);
 
         /// <summary>
         /// 松开小键盘Enter<br/>
         /// 该方法会模拟松开小键盘Enter键，通常用于释放按键。</summary>
         /// <param name="token">取消令牌，用于取消操作。</param>
         /// <returns>表示操作的任务。</returns>
-        public async Task NumEnterLoosenAsync(CancellationToken token = default)
-            => await KeyboardLoosenKeyAsync(Key.Enter, token);
+        public Task NumEnterLoosenAsync(CancellationToken token = default)
+            => KeyboardLoosenKeyAsync(Key.Enter, token);
 
         /// <summary>
         /// 按下并松开Pause/Break<br/>
         /// 该方法会模拟按下并松开Pause/Break键，通常用于暂停程序或调试。</summary>
         /// <param name="token">取消令牌，用于取消操作。</param>
         /// <returns>表示操作的任务。</returns>
-        public async Task PauseAsync(CancellationToken token = default)
-            => await KeyboardPressAsync(Key.Pause, token);
+        public Task PauseAsync(CancellationToken token = default)
+            => KeyboardPressAsync(Key.Pause, token);
 
         /// <summary>
         /// 按下Pause/Break<br/>
         /// 该方法会模拟按下Pause/Break键，通常用于暂停程序或调试。</summary>
         /// <param name="token">取消令牌，用于取消操作。</param>
         /// <returns>表示操作的任务。</returns>
-        public async Task PausePressAsync(CancellationToken token = default)
-            => await KeyboardPressKeyAsync(Key.Pause, token);
+        public Task PausePressAsync(CancellationToken token = default)
+            => KeyboardPressKeyAsync(Key.Pause, token);
 
         /// <summary>
         /// 松开Pause/Break<br/>
         /// 该方法会模拟松开Pause/Break键，通常用于释放按键。</summary>
         /// <param name="token">取消令牌，用于取消操作。</param>
         /// <returns>表示操作的任务。</returns>
-        public async Task PauseLoosenAsync(CancellationToken token = default)
-            => await KeyboardLoosenKeyAsync(Key.Pause, token);
+        public Task PauseLoosenAsync(CancellationToken token = default)
+            => KeyboardLoosenKeyAsync(Key.Pause, token);
 
         /// <summary>
         /// 按下并松开PrintScreen<br/>
         /// 该方法会模拟按下并松开PrintScreen键，通常用于截屏操作。</summary>
         /// <param name="token">取消令牌，用于取消操作。</param>
         /// <returns>表示操作的任务。</returns>
-        public async Task PrintScreenAsync(CancellationToken token = default)
-            => await KeyboardPressAsync(Key.PrintScreen, token);
+        public Task PrintScreenAsync(CancellationToken token = default)
+            => KeyboardPressAsync(Key.PrintScreen, token);
 
         /// <summary>
         /// 按下PrintScreen<br/>
         /// 该方法会模拟按下PrintScreen键，通常用于截屏操作。</summary>
         /// <param name="token">取消令牌，用于取消操作。</param>
         /// <returns>表示操作的任务。</returns>
-        public async Task PrintScreenPressAsync(CancellationToken token = default)
-            => await KeyboardPressKeyAsync(Key.PrintScreen, token);
+        public Task PrintScreenPressAsync(CancellationToken token = default)
+            => KeyboardPressKeyAsync(Key.PrintScreen, token);
 
         /// <summary>
         /// 松开PrintScreen<br/>
         /// 该方法会模拟松开PrintScreen键，通常用于释放按键。</summary>
         /// <param name="token">取消令牌，用于取消操作。</param>
         /// <returns>表示操作的任务。</returns>
-        public async Task PrintScreenLoosenAsync(CancellationToken token = default)
-            => await KeyboardLoosenKeyAsync(Key.PrintScreen, token);
+        public Task PrintScreenLoosenAsync(CancellationToken token = default)
+            => KeyboardLoosenKeyAsync(Key.PrintScreen, token);
 
         /// <summary>
         /// 按下并松开ScrollLock<br/>
         /// 该方法会模拟按下并松开ScrollLock键，通常用于滚动锁定操作。</summary>
         /// <param name="token">取消令牌，用于取消操作。</param>
         /// <returns>表示操作的任务。</returns>
-        public async Task ScrollLockAsync(CancellationToken token = default)
-            => await KeyboardPressAsync(Key.Scroll, token);
+        public Task ScrollLockAsync(CancellationToken token = default)
+            => KeyboardPressAsync(Key.Scroll, token);
 
         /// <summary>
         /// 按下ScrollLock<br/>
         /// 该方法会模拟按下ScrollLock键，通常用于滚动锁定操作。</summary>
         /// <param name="token">取消令牌，用于取消操作。</param>
         /// <returns>表示操作的任务。</returns>
-        public async Task ScrollLockPressAsync(CancellationToken token = default)
-            => await KeyboardPressKeyAsync(Key.Scroll, token);
+        public Task ScrollLockPressAsync(CancellationToken token = default)
+            => KeyboardPressKeyAsync(Key.Scroll, token);
 
         /// <summary>
         /// 松开ScrollLock<br/>
         /// 该方法会模拟松开ScrollLock键，通常用于释放按键。</summary>
         /// <param name="token">取消令牌，用于取消操作。</param>
         /// <returns>表示操作的任务。</returns>
-        public async Task ScrollLockLoosenAsync(CancellationToken token = default)
-            => await KeyboardLoosenKeyAsync(Key.Scroll, token);
+        public Task ScrollLockLoosenAsync(CancellationToken token = default)
+            => KeyboardLoosenKeyAsync(Key.Scroll, token);
 
         /// <summary>
         /// 按下并松开NumLock<br/>
         /// 该方法会模拟按下并松开NumLock键，通常用于切换小键盘输入模式。</summary>
         /// <param name="token">取消令牌，用于取消操作。</param>
         /// <returns>表示操作的任务。</returns>
-        public async Task NumLockAsync(CancellationToken token = default)
-            => await KeyboardPressAsync(Key.NumLock, token);
+        public Task NumLockAsync(CancellationToken token = default)
+            => KeyboardPressAsync(Key.NumLock, token);
 
         /// <summary>
         /// 按下NumLock<br/>
         /// 该方法会模拟按下NumLock键，通常用于切换小键盘输入模式。</summary>
         /// <param name="token">取消令牌，用于取消操作。</param>
         /// <returns>表示操作的任务。</returns>
-        public async Task NumLockPressAsync(CancellationToken token = default)
-            => await KeyboardPressKeyAsync(Key.NumLock, token);
+        public Task NumLockPressAsync(CancellationToken token = default)
+            => KeyboardPressKeyAsync(Key.NumLock, token);
 
         /// <summary>
         /// 松开NumLock<br/>
         /// 该方法会模拟松开NumLock键，通常用于释放按键。</summary>
         /// <param name="token">取消令牌，用于取消操作。</param>
         /// <returns>表示操作的任务。</returns>
-        public async Task NumLockLoosenAsync(CancellationToken token = default)
-            => await KeyboardLoosenKeyAsync(Key.NumLock, token);
+        public Task NumLockLoosenAsync(CancellationToken token = default)
+            => KeyboardLoosenKeyAsync(Key.NumLock, token);
 
         /// <summary>
         /// 按下并松开Escape<br/>
         /// 该方法会模拟按下并松开Escape键，通常用于取消操作或退出界面。</summary>
         /// <param name="token">取消令牌，用于取消操作。</param>
         /// <returns>表示操作的任务。</returns>
-        public async Task EscapeAsync(CancellationToken token = default)
-            => await KeyboardPressAsync(Key.Escape, token);
+        public Task EscapeAsync(CancellationToken token = default)
+            => KeyboardPressAsync(Key.Escape, token);
 
         /// <summary>
         /// 按下Escape<br/>
         /// 该方法会模拟按下Escape键，通常用于取消操作或退出界面。</summary>
         /// <param name="token">取消令牌，用于取消操作。</param>
         /// <returns>表示操作的任务。</returns>
-        public async Task EscapePressAsync(CancellationToken token = default)
-            => await KeyboardPressKeyAsync(Key.Escape, token);
+        public Task EscapePressAsync(CancellationToken token = default)
+            => KeyboardPressKeyAsync(Key.Escape, token);
 
         /// <summary>
         /// 松开Escape<br/>
         /// 该方法会模拟松开Escape键，通常用于释放按键。</summary>
         /// <param name="token">取消令牌，用于取消操作。</param>
         /// <returns>表示操作的任务。</returns>
-        public async Task EscapeLoosenAsync(CancellationToken token = default)
-            => await KeyboardLoosenKeyAsync(Key.Escape, token);
+        public Task EscapeLoosenAsync(CancellationToken token = default)
+            => KeyboardLoosenKeyAsync(Key.Escape, token);
 
 
         #endregion
@@ -946,96 +940,96 @@ namespace Snet.Windows.KMSim.core
         /// 该方法会模拟按下并松开 ↑ 键，通常用于模拟按键动作，例如在键盘事件或自动化测试中使用。</summary>
         /// <param name="token">取消令牌，用于取消操作。调用者可以通过传递 CancellationToken 来取消该任务。</param>
         /// <returns>表示操作的任务。该任务在按键操作完成后返回。</returns>
-        public async Task UpAsync(CancellationToken token = default)
-            => await KeyboardPressAsync(Key.Up, token);
+        public Task UpAsync(CancellationToken token = default)
+            => KeyboardPressAsync(Key.Up, token);
 
         /// <summary>
         /// 模拟按下 ↑ 键<br/>
         /// 该方法会模拟按下 ↑ 键，但不会松开它，通常用于需要持续按住某个键的场景。</summary>
         /// <param name="token">取消令牌，用于取消操作。可以在操作中途取消按键事件。</param>
         /// <returns>表示操作的任务。该任务在按键按下操作完成后返回。</returns>
-        public async Task UpPressAsync(CancellationToken token = default)
-            => await KeyboardPressKeyAsync(Key.Up, token);
+        public Task UpPressAsync(CancellationToken token = default)
+            => KeyboardPressKeyAsync(Key.Up, token);
 
         /// <summary>
         /// 模拟松开 ↑ 键<br/>
         /// 该方法会模拟松开 ↑ 键，通常用于在按键操作后释放键盘按键。</summary>
         /// <param name="token">取消令牌，用于取消操作。可以在操作中途取消松开操作。</param>
         /// <returns>表示操作的任务。该任务在松开操作完成后返回。</returns>
-        public async Task UpLoosenAsync(CancellationToken token = default)
-            => await KeyboardLoosenKeyAsync(Key.Up, token);
+        public Task UpLoosenAsync(CancellationToken token = default)
+            => KeyboardLoosenKeyAsync(Key.Up, token);
 
         /// <summary>
         /// 模拟按下并松开 ↓ 键<br/>
         /// 该方法会模拟按下并松开 ↓ 键，通常用于模拟按键动作，类似于按键事件的触发。</summary>
         /// <param name="token">取消令牌，用于取消操作。如果需要取消操作，可以传递一个 CancellationToken。</param>
         /// <returns>表示操作的任务。任务会在按键动作完成后返回。</returns>
-        public async Task DownAsync(CancellationToken token = default)
-            => await KeyboardPressAsync(Key.Down, token);
+        public Task DownAsync(CancellationToken token = default)
+            => KeyboardPressAsync(Key.Down, token);
 
         /// <summary>
         /// 模拟按下 ↓ 键<br/>
         /// 该方法会模拟按下 ↓ 键并保持按下状态，通常用于需要持续按下某个键的场景。</summary>
         /// <param name="token">取消令牌，用于取消操作。可以在按键按下时通过取消令牌中断操作。</param>
         /// <returns>表示操作的任务。任务会在按下操作完成后返回。</returns>
-        public async Task DownPressAsync(CancellationToken token = default)
-            => await KeyboardPressKeyAsync(Key.Down, token);
+        public Task DownPressAsync(CancellationToken token = default)
+            => KeyboardPressKeyAsync(Key.Down, token);
 
         /// <summary>
         /// 模拟松开 ↓ 键<br/>
         /// 该方法会模拟松开 ↓ 键，通常用于按键释放后事件的触发。</summary>
         /// <param name="token">取消令牌，用于取消操作。通过传递取消令牌，调用者可以取消该操作。</param>
         /// <returns>表示操作的任务。任务会在松开操作完成后返回。</returns>
-        public async Task DownLoosenAsync(CancellationToken token = default)
-            => await KeyboardLoosenKeyAsync(Key.Down, token);
+        public Task DownLoosenAsync(CancellationToken token = default)
+            => KeyboardLoosenKeyAsync(Key.Down, token);
 
         /// <summary>
         /// 模拟按下并松开 ← 键<br/>
         /// 该方法会模拟按下并松开 ← 键，用于模拟标准的键盘按下并松开事件。</summary>
         /// <param name="token">取消令牌，用于取消操作。可以通过传递取消令牌来取消该任务。</param>
         /// <returns>表示操作的任务。任务在键盘按下并松开后完成。</returns>
-        public async Task LeftAsync(CancellationToken token = default)
-            => await KeyboardPressAsync(Key.Left, token);
+        public Task LeftAsync(CancellationToken token = default)
+            => KeyboardPressAsync(Key.Left, token);
 
         /// <summary>
         /// 模拟按下 ← 键<br/>
         /// 该方法会模拟按下 ← 键，并保持按下状态，适用于需要长时间按住某个键的操作。</summary>
         /// <param name="token">取消令牌，用于取消操作。通过传递取消令牌，可以中断操作。</param>
         /// <returns>表示操作的任务。该任务在按键按下操作完成后返回。</returns>
-        public async Task LeftPressAsync(CancellationToken token = default)
-            => await KeyboardPressKeyAsync(Key.Left, token);
+        public Task LeftPressAsync(CancellationToken token = default)
+            => KeyboardPressKeyAsync(Key.Left, token);
 
         /// <summary>
         /// 模拟松开 ← 键<br/>
         /// 该方法会模拟松开 ← 键，适用于释放键盘按键的操作。</summary>
         /// <param name="token">取消令牌，用于取消操作。通过传递取消令牌，调用者可以取消该任务。</param>
         /// <returns>表示操作的任务。任务会在松开操作完成后返回。</returns>
-        public async Task LeftLoosenAsync(CancellationToken token = default)
-            => await KeyboardLoosenKeyAsync(Key.Left, token);
+        public Task LeftLoosenAsync(CancellationToken token = default)
+            => KeyboardLoosenKeyAsync(Key.Left, token);
 
         /// <summary>
         /// 模拟按下并松开 → 键<br/>
         /// 该方法会模拟按下并松开 → 键，通常用于触发键盘按下松开事件。</summary>
         /// <param name="token">取消令牌，用于取消操作。调用者可以通过传递 CancellationToken 来取消任务。</param>
         /// <returns>表示操作的任务。任务会在键盘按下并松开后完成。</returns>
-        public async Task RightAsync(CancellationToken token = default)
-            => await KeyboardPressAsync(Key.Right, token);
+        public Task RightAsync(CancellationToken token = default)
+            => KeyboardPressAsync(Key.Right, token);
 
         /// <summary>
         /// 模拟按下 → 键<br/>
         /// 该方法会模拟按下 → 键并保持按下状态，适用于长时间按住某个键的操作。</summary>
         /// <param name="token">取消令牌，用于取消操作。调用者可以传递取消令牌来中断操作。</param>
         /// <returns>表示操作的任务。任务会在按下操作完成后返回。</returns>
-        public async Task RightPressAsync(CancellationToken token = default)
-            => await KeyboardPressKeyAsync(Key.Right, token);
+        public Task RightPressAsync(CancellationToken token = default)
+            => KeyboardPressKeyAsync(Key.Right, token);
 
         /// <summary>
         /// 模拟松开 → 键<br/>
         /// 该方法会模拟松开 → 键，通常用于按键操作的结束或释放事件。</summary>
         /// <param name="token">取消令牌，用于取消操作。可以在任务执行过程中通过传递取消令牌来终止操作。</param>
         /// <returns>表示操作的任务。任务会在松开操作完成后返回。</returns>
-        public async Task RightLoosenAsync(CancellationToken token = default)
-            => await KeyboardLoosenKeyAsync(Key.Right, token);
+        public Task RightLoosenAsync(CancellationToken token = default)
+            => KeyboardLoosenKeyAsync(Key.Right, token);
 
         #endregion
 
@@ -1045,288 +1039,288 @@ namespace Snet.Windows.KMSim.core
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task F1Async(CancellationToken token = default)
-            => await KeyboardPressAsync(Key.F1, token);
+        public Task F1Async(CancellationToken token = default)
+            => KeyboardPressAsync(Key.F1, token);
 
         /// <summary>
         /// 模拟按下 F1 键
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task F1PressAsync(CancellationToken token = default)
-            => await KeyboardPressKeyAsync(Key.F1, token);
+        public Task F1PressAsync(CancellationToken token = default)
+            => KeyboardPressKeyAsync(Key.F1, token);
 
         /// <summary>
         /// 模拟松开 F1 键
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task F1LoosenAsync(CancellationToken token = default)
-            => await KeyboardLoosenKeyAsync(Key.F1, token);
+        public Task F1LoosenAsync(CancellationToken token = default)
+            => KeyboardLoosenKeyAsync(Key.F1, token);
 
         /// <summary>
         /// 模拟按下并松开 F2 键
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task F2Async(CancellationToken token = default)
-            => await KeyboardPressAsync(Key.F2, token);
+        public Task F2Async(CancellationToken token = default)
+            => KeyboardPressAsync(Key.F2, token);
 
         /// <summary>
         /// 模拟按下 F2 键
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task F2PressAsync(CancellationToken token = default)
-            => await KeyboardPressKeyAsync(Key.F2, token);
+        public Task F2PressAsync(CancellationToken token = default)
+            => KeyboardPressKeyAsync(Key.F2, token);
 
         /// <summary>
         /// 模拟松开 F2 键
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task F2LoosenAsync(CancellationToken token = default)
-            => await KeyboardLoosenKeyAsync(Key.F2, token);
+        public Task F2LoosenAsync(CancellationToken token = default)
+            => KeyboardLoosenKeyAsync(Key.F2, token);
 
         /// <summary>
         /// 模拟按下并松开 F3 键
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task F3Async(CancellationToken token = default)
-            => await KeyboardPressAsync(Key.F3, token);
+        public Task F3Async(CancellationToken token = default)
+            => KeyboardPressAsync(Key.F3, token);
 
         /// <summary>
         /// 模拟按下 F3 键
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task F3PressAsync(CancellationToken token = default)
-            => await KeyboardPressKeyAsync(Key.F3, token);
+        public Task F3PressAsync(CancellationToken token = default)
+            => KeyboardPressKeyAsync(Key.F3, token);
 
         /// <summary>
         /// 模拟松开 F3 键
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task F3LoosenAsync(CancellationToken token = default)
-            => await KeyboardLoosenKeyAsync(Key.F3, token);
+        public Task F3LoosenAsync(CancellationToken token = default)
+            => KeyboardLoosenKeyAsync(Key.F3, token);
 
         /// <summary>
         /// 模拟按下并松开 F4 键
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task F4Async(CancellationToken token = default)
-            => await KeyboardPressAsync(Key.F4, token);
+        public Task F4Async(CancellationToken token = default)
+            => KeyboardPressAsync(Key.F4, token);
 
         /// <summary>
         /// 模拟按下 F4 键
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task F4PressAsync(CancellationToken token = default)
-            => await KeyboardPressKeyAsync(Key.F4, token);
+        public Task F4PressAsync(CancellationToken token = default)
+            => KeyboardPressKeyAsync(Key.F4, token);
 
         /// <summary>
         /// 模拟松开 F4 键
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task F4LoosenAsync(CancellationToken token = default)
-            => await KeyboardLoosenKeyAsync(Key.F4, token);
+        public Task F4LoosenAsync(CancellationToken token = default)
+            => KeyboardLoosenKeyAsync(Key.F4, token);
 
         /// <summary>
         /// 模拟按下并松开 F5 键
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task F5Async(CancellationToken token = default)
-            => await KeyboardPressAsync(Key.F5, token);
+        public Task F5Async(CancellationToken token = default)
+            => KeyboardPressAsync(Key.F5, token);
 
         /// <summary>
         /// 模拟按下 F5 键
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task F5PressAsync(CancellationToken token = default)
-            => await KeyboardPressKeyAsync(Key.F5, token);
+        public Task F5PressAsync(CancellationToken token = default)
+            => KeyboardPressKeyAsync(Key.F5, token);
 
         /// <summary>
         /// 模拟松开 F5 键
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task F5LoosenAsync(CancellationToken token = default)
-            => await KeyboardLoosenKeyAsync(Key.F5, token);
+        public Task F5LoosenAsync(CancellationToken token = default)
+            => KeyboardLoosenKeyAsync(Key.F5, token);
 
         /// <summary>
         /// 模拟按下并松开 F6 键
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task F6Async(CancellationToken token = default)
-            => await KeyboardPressAsync(Key.F6, token);
+        public Task F6Async(CancellationToken token = default)
+            => KeyboardPressAsync(Key.F6, token);
 
         /// <summary>
         /// 模拟按下 F6 键
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task F6PressAsync(CancellationToken token = default)
-            => await KeyboardPressKeyAsync(Key.F6, token);
+        public Task F6PressAsync(CancellationToken token = default)
+            => KeyboardPressKeyAsync(Key.F6, token);
 
         /// <summary>
         /// 模拟松开 F6 键
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task F6LoosenAsync(CancellationToken token = default)
-            => await KeyboardLoosenKeyAsync(Key.F6, token);
+        public Task F6LoosenAsync(CancellationToken token = default)
+            => KeyboardLoosenKeyAsync(Key.F6, token);
 
         /// <summary>
         /// 模拟按下并松开 F7 键
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task F7Async(CancellationToken token = default)
-            => await KeyboardPressAsync(Key.F7, token);
+        public Task F7Async(CancellationToken token = default)
+            => KeyboardPressAsync(Key.F7, token);
 
         /// <summary>
         /// 模拟按下 F7 键
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task F7PressAsync(CancellationToken token = default)
-            => await KeyboardPressKeyAsync(Key.F7, token);
+        public Task F7PressAsync(CancellationToken token = default)
+            => KeyboardPressKeyAsync(Key.F7, token);
 
         /// <summary>
         /// 模拟松开 F7 键
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task F7LoosenAsync(CancellationToken token = default)
-            => await KeyboardLoosenKeyAsync(Key.F7, token);
+        public Task F7LoosenAsync(CancellationToken token = default)
+            => KeyboardLoosenKeyAsync(Key.F7, token);
 
         /// <summary>
         /// 模拟按下并松开 F8 键
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task F8Async(CancellationToken token = default)
-            => await KeyboardPressAsync(Key.F8, token);
+        public Task F8Async(CancellationToken token = default)
+            => KeyboardPressAsync(Key.F8, token);
 
         /// <summary>
         /// 模拟按下 F8 键
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task F8PressAsync(CancellationToken token = default)
-            => await KeyboardPressKeyAsync(Key.F8, token);
+        public Task F8PressAsync(CancellationToken token = default)
+            => KeyboardPressKeyAsync(Key.F8, token);
 
         /// <summary>
         /// 模拟松开 F8 键
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task F8LoosenAsync(CancellationToken token = default)
-            => await KeyboardLoosenKeyAsync(Key.F8, token);
+        public Task F8LoosenAsync(CancellationToken token = default)
+            => KeyboardLoosenKeyAsync(Key.F8, token);
 
         /// <summary>
         /// 模拟按下并松开 F9 键
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task F9Async(CancellationToken token = default)
-            => await KeyboardPressAsync(Key.F9, token);
+        public Task F9Async(CancellationToken token = default)
+            => KeyboardPressAsync(Key.F9, token);
 
         /// <summary>
         /// 模拟按下 F9 键
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task F9PressAsync(CancellationToken token = default)
-            => await KeyboardPressKeyAsync(Key.F9, token);
+        public Task F9PressAsync(CancellationToken token = default)
+            => KeyboardPressKeyAsync(Key.F9, token);
 
         /// <summary>
         /// 模拟松开 F9 键
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task F9LoosenAsync(CancellationToken token = default)
-            => await KeyboardLoosenKeyAsync(Key.F9, token);
+        public Task F9LoosenAsync(CancellationToken token = default)
+            => KeyboardLoosenKeyAsync(Key.F9, token);
 
         /// <summary>
         /// 模拟按下并松开 F10 键
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task F10Async(CancellationToken token = default)
-            => await KeyboardPressAsync(Key.F10, token);
+        public Task F10Async(CancellationToken token = default)
+            => KeyboardPressAsync(Key.F10, token);
 
         /// <summary>
         /// 模拟按下 F10 键
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task F10PressAsync(CancellationToken token = default)
-            => await KeyboardPressKeyAsync(Key.F10, token);
+        public Task F10PressAsync(CancellationToken token = default)
+            => KeyboardPressKeyAsync(Key.F10, token);
 
         /// <summary>
         /// 模拟松开 F10 键
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task F10LoosenAsync(CancellationToken token = default)
-            => await KeyboardLoosenKeyAsync(Key.F10, token);
+        public Task F10LoosenAsync(CancellationToken token = default)
+            => KeyboardLoosenKeyAsync(Key.F10, token);
 
         /// <summary>
         /// 模拟按下并松开 F11 键
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task F11Async(CancellationToken token = default)
-            => await KeyboardPressAsync(Key.F11, token);
+        public Task F11Async(CancellationToken token = default)
+            => KeyboardPressAsync(Key.F11, token);
 
         /// <summary>
         /// 模拟按下 F11 键
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task F11PressAsync(CancellationToken token = default)
-            => await KeyboardPressKeyAsync(Key.F11, token);
+        public Task F11PressAsync(CancellationToken token = default)
+            => KeyboardPressKeyAsync(Key.F11, token);
 
         /// <summary>
         /// 模拟松开 F11 键
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task F11LoosenAsync(CancellationToken token = default)
-            => await KeyboardLoosenKeyAsync(Key.F11, token);
+        public Task F11LoosenAsync(CancellationToken token = default)
+            => KeyboardLoosenKeyAsync(Key.F11, token);
 
         /// <summary>
         /// 模拟按下并松开 F12 键
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task F12Async(CancellationToken token = default)
-            => await KeyboardPressAsync(Key.F12, token);
+        public Task F12Async(CancellationToken token = default)
+            => KeyboardPressAsync(Key.F12, token);
 
         /// <summary>
         /// 模拟按下 F12 键
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task F12PressAsync(CancellationToken token = default)
-            => await KeyboardPressKeyAsync(Key.F12, token);
+        public Task F12PressAsync(CancellationToken token = default)
+            => KeyboardPressKeyAsync(Key.F12, token);
 
         /// <summary>
         /// 模拟松开 F12 键
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task F12LoosenAsync(CancellationToken token = default)
-            => await KeyboardLoosenKeyAsync(Key.F12, token);
+        public Task F12LoosenAsync(CancellationToken token = default)
+            => KeyboardLoosenKeyAsync(Key.F12, token);
         #endregion
 
         #region 数字
@@ -1336,480 +1330,480 @@ namespace Snet.Windows.KMSim.core
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task NumPad0Async(CancellationToken token = default)
-            => await KeyboardPressAsync(Key.NumPad0, token);
+        public Task NumPad0Async(CancellationToken token = default)
+            => KeyboardPressAsync(Key.NumPad0, token);
 
         /// <summary>
         /// 模拟按下小键盘数字键 0
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task NumPad0PressAsync(CancellationToken token = default)
-            => await KeyboardPressKeyAsync(Key.NumPad0, token);
+        public Task NumPad0PressAsync(CancellationToken token = default)
+            => KeyboardPressKeyAsync(Key.NumPad0, token);
 
         /// <summary>
         /// 模拟松开小键盘数字键 0
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task NumPad0LoosenAsync(CancellationToken token = default)
-            => await KeyboardLoosenKeyAsync(Key.NumPad0, token);
+        public Task NumPad0LoosenAsync(CancellationToken token = default)
+            => KeyboardLoosenKeyAsync(Key.NumPad0, token);
 
         /// <summary>
         /// 模拟按下并松开小键盘数字键 1
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task NumPad1Async(CancellationToken token = default)
-            => await KeyboardPressAsync(Key.NumPad1, token);
+        public Task NumPad1Async(CancellationToken token = default)
+            => KeyboardPressAsync(Key.NumPad1, token);
 
         /// <summary>
         /// 模拟按下小键盘数字键 1
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task NumPad1PressAsync(CancellationToken token = default)
-            => await KeyboardPressKeyAsync(Key.NumPad1, token);
+        public Task NumPad1PressAsync(CancellationToken token = default)
+            => KeyboardPressKeyAsync(Key.NumPad1, token);
 
         /// <summary>
         /// 模拟松开小键盘数字键 1
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task NumPad1LoosenAsync(CancellationToken token = default)
-            => await KeyboardLoosenKeyAsync(Key.NumPad1, token);
+        public Task NumPad1LoosenAsync(CancellationToken token = default)
+            => KeyboardLoosenKeyAsync(Key.NumPad1, token);
 
         /// <summary>
         /// 模拟按下并松开小键盘数字键 2
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task NumPad2Async(CancellationToken token = default)
-            => await KeyboardPressAsync(Key.NumPad2, token);
+        public Task NumPad2Async(CancellationToken token = default)
+            => KeyboardPressAsync(Key.NumPad2, token);
 
         /// <summary>
         /// 模拟按下小键盘数字键 2
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task NumPad2PressAsync(CancellationToken token = default)
-            => await KeyboardPressKeyAsync(Key.NumPad2, token);
+        public Task NumPad2PressAsync(CancellationToken token = default)
+            => KeyboardPressKeyAsync(Key.NumPad2, token);
 
         /// <summary>
         /// 模拟松开小键盘数字键 2
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task NumPad2LoosenAsync(CancellationToken token = default)
-            => await KeyboardLoosenKeyAsync(Key.NumPad2, token);
+        public Task NumPad2LoosenAsync(CancellationToken token = default)
+            => KeyboardLoosenKeyAsync(Key.NumPad2, token);
 
         /// <summary>
         /// 模拟按下并松开小键盘数字键 3
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task NumPad3Async(CancellationToken token = default)
-            => await KeyboardPressAsync(Key.NumPad3, token);
+        public Task NumPad3Async(CancellationToken token = default)
+            => KeyboardPressAsync(Key.NumPad3, token);
 
         /// <summary>
         /// 模拟按下小键盘数字键 3
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task NumPad3PressAsync(CancellationToken token = default)
-            => await KeyboardPressKeyAsync(Key.NumPad3, token);
+        public Task NumPad3PressAsync(CancellationToken token = default)
+            => KeyboardPressKeyAsync(Key.NumPad3, token);
 
         /// <summary>
         /// 模拟松开小键盘数字键 3
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task NumPad3LoosenAsync(CancellationToken token = default)
-            => await KeyboardLoosenKeyAsync(Key.NumPad3, token);
+        public Task NumPad3LoosenAsync(CancellationToken token = default)
+            => KeyboardLoosenKeyAsync(Key.NumPad3, token);
 
         /// <summary>
         /// 模拟按下并松开小键盘数字键 4
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task NumPad4Async(CancellationToken token = default)
-            => await KeyboardPressAsync(Key.NumPad4, token);
+        public Task NumPad4Async(CancellationToken token = default)
+            => KeyboardPressAsync(Key.NumPad4, token);
 
         /// <summary>
         /// 模拟按下小键盘数字键 4
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task NumPad4PressAsync(CancellationToken token = default)
-            => await KeyboardPressKeyAsync(Key.NumPad4, token);
+        public Task NumPad4PressAsync(CancellationToken token = default)
+            => KeyboardPressKeyAsync(Key.NumPad4, token);
 
         /// <summary>
         /// 模拟松开小键盘数字键 4
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task NumPad4LoosenAsync(CancellationToken token = default)
-            => await KeyboardLoosenKeyAsync(Key.NumPad4, token);
+        public Task NumPad4LoosenAsync(CancellationToken token = default)
+            => KeyboardLoosenKeyAsync(Key.NumPad4, token);
 
         /// <summary>
         /// 模拟按下并松开小键盘数字键 5
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task NumPad5Async(CancellationToken token = default)
-            => await KeyboardPressAsync(Key.NumPad5, token);
+        public Task NumPad5Async(CancellationToken token = default)
+            => KeyboardPressAsync(Key.NumPad5, token);
 
         /// <summary>
         /// 模拟按下小键盘数字键 5
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task NumPad5PressAsync(CancellationToken token = default)
-            => await KeyboardPressKeyAsync(Key.NumPad5, token);
+        public Task NumPad5PressAsync(CancellationToken token = default)
+            => KeyboardPressKeyAsync(Key.NumPad5, token);
 
         /// <summary>
         /// 模拟松开小键盘数字键 5
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task NumPad5LoosenAsync(CancellationToken token = default)
-            => await KeyboardLoosenKeyAsync(Key.NumPad5, token);
+        public Task NumPad5LoosenAsync(CancellationToken token = default)
+            => KeyboardLoosenKeyAsync(Key.NumPad5, token);
 
         /// <summary>
         /// 模拟按下并松开小键盘数字键 6
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task NumPad6Async(CancellationToken token = default)
-            => await KeyboardPressAsync(Key.NumPad6, token);
+        public Task NumPad6Async(CancellationToken token = default)
+            => KeyboardPressAsync(Key.NumPad6, token);
 
         /// <summary>
         /// 模拟按下小键盘数字键 6
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task NumPad6PressAsync(CancellationToken token = default)
-            => await KeyboardPressKeyAsync(Key.NumPad6, token);
+        public Task NumPad6PressAsync(CancellationToken token = default)
+            => KeyboardPressKeyAsync(Key.NumPad6, token);
 
         /// <summary>
         /// 模拟松开小键盘数字键 6
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task NumPad6LoosenAsync(CancellationToken token = default)
-            => await KeyboardLoosenKeyAsync(Key.NumPad6, token);
+        public Task NumPad6LoosenAsync(CancellationToken token = default)
+            => KeyboardLoosenKeyAsync(Key.NumPad6, token);
 
         /// <summary>
         /// 模拟按下并松开小键盘数字键 7
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task NumPad7Async(CancellationToken token = default)
-            => await KeyboardPressAsync(Key.NumPad7, token);
+        public Task NumPad7Async(CancellationToken token = default)
+            => KeyboardPressAsync(Key.NumPad7, token);
 
         /// <summary>
         /// 模拟按下小键盘数字键 7
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task NumPad7PressAsync(CancellationToken token = default)
-            => await KeyboardPressKeyAsync(Key.NumPad7, token);
+        public Task NumPad7PressAsync(CancellationToken token = default)
+            => KeyboardPressKeyAsync(Key.NumPad7, token);
 
         /// <summary>
         /// 模拟松开小键盘数字键 7
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task NumPad7LoosenAsync(CancellationToken token = default)
-            => await KeyboardLoosenKeyAsync(Key.NumPad7, token);
+        public Task NumPad7LoosenAsync(CancellationToken token = default)
+            => KeyboardLoosenKeyAsync(Key.NumPad7, token);
 
         /// <summary>
         /// 模拟按下并松开小键盘数字键 8
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task NumPad8Async(CancellationToken token = default)
-            => await KeyboardPressAsync(Key.NumPad8, token);
+        public Task NumPad8Async(CancellationToken token = default)
+            => KeyboardPressAsync(Key.NumPad8, token);
 
         /// <summary>
         /// 模拟按下小键盘数字键 8
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task NumPad8PressAsync(CancellationToken token = default)
-            => await KeyboardPressKeyAsync(Key.NumPad8, token);
+        public Task NumPad8PressAsync(CancellationToken token = default)
+            => KeyboardPressKeyAsync(Key.NumPad8, token);
 
         /// <summary>
         /// 模拟松开小键盘数字键 8
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task NumPad8LoosenAsync(CancellationToken token = default)
-            => await KeyboardLoosenKeyAsync(Key.NumPad8, token);
+        public Task NumPad8LoosenAsync(CancellationToken token = default)
+            => KeyboardLoosenKeyAsync(Key.NumPad8, token);
 
         /// <summary>
         /// 模拟按下并松开小键盘数字键 9
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task NumPad9Async(CancellationToken token = default)
-            => await KeyboardPressAsync(Key.NumPad9, token);
+        public Task NumPad9Async(CancellationToken token = default)
+            => KeyboardPressAsync(Key.NumPad9, token);
 
         /// <summary>
         /// 模拟按下小键盘数字键 9
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task NumPad9PressAsync(CancellationToken token = default)
-            => await KeyboardPressKeyAsync(Key.NumPad9, token);
+        public Task NumPad9PressAsync(CancellationToken token = default)
+            => KeyboardPressKeyAsync(Key.NumPad9, token);
 
         /// <summary>
         /// 模拟松开小键盘数字键 9
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task NumPad9LoosenAsync(CancellationToken token = default)
-            => await KeyboardLoosenKeyAsync(Key.NumPad9, token);
+        public Task NumPad9LoosenAsync(CancellationToken token = default)
+            => KeyboardLoosenKeyAsync(Key.NumPad9, token);
 
         /// <summary>
         /// 模拟按下并松开主键盘数字键 0
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task D0Async(CancellationToken token = default)
-            => await KeyboardPressAsync(Key.D0, token);
+        public Task D0Async(CancellationToken token = default)
+            => KeyboardPressAsync(Key.D0, token);
 
         /// <summary>
         /// 模拟按下主键盘数字键 0
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task D0PressAsync(CancellationToken token = default)
-            => await KeyboardPressKeyAsync(Key.D0, token);
+        public Task D0PressAsync(CancellationToken token = default)
+            => KeyboardPressKeyAsync(Key.D0, token);
 
         /// <summary>
         /// 模拟松开主键盘数字键 0
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task D0LoosenAsync(CancellationToken token = default)
-            => await KeyboardLoosenKeyAsync(Key.D0, token);
+        public Task D0LoosenAsync(CancellationToken token = default)
+            => KeyboardLoosenKeyAsync(Key.D0, token);
 
         /// <summary>
         /// 模拟按下并松开主键盘数字键 1
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task D1Async(CancellationToken token = default)
-            => await KeyboardPressAsync(Key.D1, token);
+        public Task D1Async(CancellationToken token = default)
+            => KeyboardPressAsync(Key.D1, token);
 
         /// <summary>
         /// 模拟按下主键盘数字键 1
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task D1PressAsync(CancellationToken token = default)
-            => await KeyboardPressKeyAsync(Key.D1, token);
+        public Task D1PressAsync(CancellationToken token = default)
+            => KeyboardPressKeyAsync(Key.D1, token);
 
         /// <summary>
         /// 模拟松开主键盘数字键 1
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task D1LoosenAsync(CancellationToken token = default)
-            => await KeyboardLoosenKeyAsync(Key.D1, token);
+        public Task D1LoosenAsync(CancellationToken token = default)
+            => KeyboardLoosenKeyAsync(Key.D1, token);
 
         /// <summary>
         /// 模拟按下并松开主键盘数字键 2
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task D2Async(CancellationToken token = default)
-            => await KeyboardPressAsync(Key.D2, token);
+        public Task D2Async(CancellationToken token = default)
+            => KeyboardPressAsync(Key.D2, token);
 
         /// <summary>
         /// 模拟按下主键盘数字键 2
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task D2PressAsync(CancellationToken token = default)
-            => await KeyboardPressKeyAsync(Key.D2, token);
+        public Task D2PressAsync(CancellationToken token = default)
+            => KeyboardPressKeyAsync(Key.D2, token);
 
         /// <summary>
         /// 模拟松开主键盘数字键 2
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task D2LoosenAsync(CancellationToken token = default)
-            => await KeyboardLoosenKeyAsync(Key.D2, token);
+        public Task D2LoosenAsync(CancellationToken token = default)
+            => KeyboardLoosenKeyAsync(Key.D2, token);
 
         /// <summary>
         /// 模拟按下并松开主键盘数字键 3
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task D3Async(CancellationToken token = default)
-            => await KeyboardPressAsync(Key.D3, token);
+        public Task D3Async(CancellationToken token = default)
+            => KeyboardPressAsync(Key.D3, token);
 
         /// <summary>
         /// 模拟按下主键盘数字键 3
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task D3PressAsync(CancellationToken token = default)
-            => await KeyboardPressKeyAsync(Key.D3, token);
+        public Task D3PressAsync(CancellationToken token = default)
+            => KeyboardPressKeyAsync(Key.D3, token);
 
         /// <summary>
         /// 模拟松开主键盘数字键 3
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task D3LoosenAsync(CancellationToken token = default)
-            => await KeyboardLoosenKeyAsync(Key.D3, token);
+        public Task D3LoosenAsync(CancellationToken token = default)
+            => KeyboardLoosenKeyAsync(Key.D3, token);
 
         /// <summary>
         /// 模拟按下并松开主键盘数字键 4
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task D4Async(CancellationToken token = default)
-            => await KeyboardPressAsync(Key.D4, token);
+        public Task D4Async(CancellationToken token = default)
+            => KeyboardPressAsync(Key.D4, token);
 
         /// <summary>
         /// 模拟按下主键盘数字键 4
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task D4PressAsync(CancellationToken token = default)
-            => await KeyboardPressKeyAsync(Key.D4, token);
+        public Task D4PressAsync(CancellationToken token = default)
+            => KeyboardPressKeyAsync(Key.D4, token);
 
         /// <summary>
         /// 模拟松开主键盘数字键 4
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task D4LoosenAsync(CancellationToken token = default)
-            => await KeyboardLoosenKeyAsync(Key.D4, token);
+        public Task D4LoosenAsync(CancellationToken token = default)
+            => KeyboardLoosenKeyAsync(Key.D4, token);
 
         /// <summary>
         /// 模拟按下并松开主键盘数字键 5
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task D5Async(CancellationToken token = default)
-            => await KeyboardPressAsync(Key.D5, token);
+        public Task D5Async(CancellationToken token = default)
+            => KeyboardPressAsync(Key.D5, token);
 
         /// <summary>
         /// 模拟按下主键盘数字键 5
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task D5PressAsync(CancellationToken token = default)
-            => await KeyboardPressKeyAsync(Key.D5, token);
+        public Task D5PressAsync(CancellationToken token = default)
+            => KeyboardPressKeyAsync(Key.D5, token);
 
         /// <summary>
         /// 模拟松开主键盘数字键 5
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task D5LoosenAsync(CancellationToken token = default)
-            => await KeyboardLoosenKeyAsync(Key.D5, token);
+        public Task D5LoosenAsync(CancellationToken token = default)
+            => KeyboardLoosenKeyAsync(Key.D5, token);
 
         /// <summary>
         /// 模拟按下并松开主键盘数字键 6
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task D6Async(CancellationToken token = default)
-            => await KeyboardPressAsync(Key.D6, token);
+        public Task D6Async(CancellationToken token = default)
+            => KeyboardPressAsync(Key.D6, token);
 
         /// <summary>
         /// 模拟按下主键盘数字键 6
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task D6PressAsync(CancellationToken token = default)
-            => await KeyboardPressKeyAsync(Key.D6, token);
+        public Task D6PressAsync(CancellationToken token = default)
+            => KeyboardPressKeyAsync(Key.D6, token);
 
         /// <summary>
         /// 模拟松开主键盘数字键 6
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task D6LoosenAsync(CancellationToken token = default)
-            => await KeyboardLoosenKeyAsync(Key.D6, token);
+        public Task D6LoosenAsync(CancellationToken token = default)
+            => KeyboardLoosenKeyAsync(Key.D6, token);
 
         /// <summary>
         /// 模拟按下并松开主键盘数字键 7
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task D7Async(CancellationToken token = default)
-            => await KeyboardPressAsync(Key.D7, token);
+        public Task D7Async(CancellationToken token = default)
+            => KeyboardPressAsync(Key.D7, token);
 
         /// <summary>
         /// 模拟按下主键盘数字键 7
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task D7PressAsync(CancellationToken token = default)
-            => await KeyboardPressKeyAsync(Key.D7, token);
+        public Task D7PressAsync(CancellationToken token = default)
+            => KeyboardPressKeyAsync(Key.D7, token);
 
         /// <summary>
         /// 模拟松开主键盘数字键 7
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task D7LoosenAsync(CancellationToken token = default)
-            => await KeyboardLoosenKeyAsync(Key.D7, token);
+        public Task D7LoosenAsync(CancellationToken token = default)
+            => KeyboardLoosenKeyAsync(Key.D7, token);
 
         /// <summary>
         /// 模拟按下并松开主键盘数字键 8
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task D8Async(CancellationToken token = default)
-            => await KeyboardPressAsync(Key.D8, token);
+        public Task D8Async(CancellationToken token = default)
+            => KeyboardPressAsync(Key.D8, token);
 
         /// <summary>
         /// 模拟按下主键盘数字键 8
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task D8PressAsync(CancellationToken token = default)
-            => await KeyboardPressKeyAsync(Key.D8, token);
+        public Task D8PressAsync(CancellationToken token = default)
+            => KeyboardPressKeyAsync(Key.D8, token);
 
         /// <summary>
         /// 模拟松开主键盘数字键 8
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task D8LoosenAsync(CancellationToken token = default)
-            => await KeyboardLoosenKeyAsync(Key.D8, token);
+        public Task D8LoosenAsync(CancellationToken token = default)
+            => KeyboardLoosenKeyAsync(Key.D8, token);
 
         /// <summary>
         /// 模拟按下并松开主键盘数字键 9
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task D9Async(CancellationToken token = default)
-            => await KeyboardPressAsync(Key.D9, token);
+        public Task D9Async(CancellationToken token = default)
+            => KeyboardPressAsync(Key.D9, token);
 
         /// <summary>
         /// 模拟按下主键盘数字键 9
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task D9PressAsync(CancellationToken token = default)
-            => await KeyboardPressKeyAsync(Key.D9, token);
+        public Task D9PressAsync(CancellationToken token = default)
+            => KeyboardPressKeyAsync(Key.D9, token);
 
         /// <summary>
         /// 模拟松开主键盘数字键 9
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task D9LoosenAsync(CancellationToken token = default)
-            => await KeyboardLoosenKeyAsync(Key.D9, token);
+        public Task D9LoosenAsync(CancellationToken token = default)
+            => KeyboardLoosenKeyAsync(Key.D9, token);
 
         #endregion
 
@@ -1820,384 +1814,384 @@ namespace Snet.Windows.KMSim.core
         /// 该方法会模拟按下并松开小键盘加号键，通常用于数字运算或小键盘操作。</summary>
         /// <param name="token">取消令牌，用于取消操作。</param>
         /// <returns>表示操作的任务。</returns>
-        public async Task NumAddAsync(CancellationToken token = default)
-            => await KeyboardPressAsync(Key.Add, token);
+        public Task NumAddAsync(CancellationToken token = default)
+            => KeyboardPressAsync(Key.Add, token);
 
         /// <summary>
         /// 按下小键盘加号<br/>
         /// 该方法会模拟按下小键盘加号键，通常用于数字运算或小键盘操作。</summary>
         /// <param name="token">取消令牌，用于取消操作。</param>
         /// <returns>表示操作的任务。</returns>
-        public async Task NumAddPressAsync(CancellationToken token = default)
-            => await KeyboardPressKeyAsync(Key.Add, token);
+        public Task NumAddPressAsync(CancellationToken token = default)
+            => KeyboardPressKeyAsync(Key.Add, token);
 
         /// <summary>
         /// 松开小键盘加号<br/>
         /// 该方法会模拟松开小键盘加号键，通常用于释放按键。</summary>
         /// <param name="token">取消令牌，用于取消操作。</param>
         /// <returns>表示操作的任务。</returns>
-        public async Task NumAddLoosenAsync(CancellationToken token = default)
-            => await KeyboardLoosenKeyAsync(Key.Add, token);
+        public Task NumAddLoosenAsync(CancellationToken token = default)
+            => KeyboardLoosenKeyAsync(Key.Add, token);
 
         /// <summary>
         /// 按下并松开小键盘减号<br/>
         /// 该方法会模拟按下并松开小键盘减号键，通常用于数字运算或小键盘操作。</summary>
         /// <param name="token">取消令牌，用于取消操作。</param>
         /// <returns>表示操作的任务。</returns>
-        public async Task NumSubtractAsync(CancellationToken token = default)
-            => await KeyboardPressAsync(Key.Subtract, token);
+        public Task NumSubtractAsync(CancellationToken token = default)
+            => KeyboardPressAsync(Key.Subtract, token);
 
         /// <summary>
         /// 按下小键盘减号<br/>
         /// 该方法会模拟按下小键盘减号键，通常用于数字运算或小键盘操作。</summary>
         /// <param name="token">取消令牌，用于取消操作。</param>
         /// <returns>表示操作的任务。</returns>
-        public async Task NumSubtractPressAsync(CancellationToken token = default)
-            => await KeyboardPressKeyAsync(Key.Subtract, token);
+        public Task NumSubtractPressAsync(CancellationToken token = default)
+            => KeyboardPressKeyAsync(Key.Subtract, token);
 
         /// <summary>
         /// 松开小键盘减号<br/>
         /// 该方法会模拟松开小键盘减号键，通常用于释放按键。</summary>
         /// <param name="token">取消令牌，用于取消操作。</param>
         /// <returns>表示操作的任务。</returns>
-        public async Task NumSubtractLoosenAsync(CancellationToken token = default)
-            => await KeyboardLoosenKeyAsync(Key.Subtract, token);
+        public Task NumSubtractLoosenAsync(CancellationToken token = default)
+            => KeyboardLoosenKeyAsync(Key.Subtract, token);
 
         /// <summary>
         /// 按下并松开小键盘乘号<br/>
         /// 该方法会模拟按下并松开小键盘乘号键，通常用于数字运算或小键盘操作。</summary>
         /// <param name="token">取消令牌，用于取消操作。</param>
         /// <returns>表示操作的任务。</returns>
-        public async Task NumMultiplyAsync(CancellationToken token = default)
-            => await KeyboardPressAsync(Key.Multiply, token);
+        public Task NumMultiplyAsync(CancellationToken token = default)
+            => KeyboardPressAsync(Key.Multiply, token);
 
         /// <summary>
         /// 按下小键盘乘号<br/>
         /// 该方法会模拟按下小键盘乘号键，通常用于数字运算或小键盘操作。</summary>
         /// <param name="token">取消令牌，用于取消操作。</param>
         /// <returns>表示操作的任务。</returns>
-        public async Task NumMultiplyPressAsync(CancellationToken token = default)
-            => await KeyboardPressKeyAsync(Key.Multiply, token);
+        public Task NumMultiplyPressAsync(CancellationToken token = default)
+            => KeyboardPressKeyAsync(Key.Multiply, token);
 
         /// <summary>
         /// 松开小键盘乘号<br/>
         /// 该方法会模拟松开小键盘乘号键，通常用于释放按键。</summary>
         /// <param name="token">取消令牌，用于取消操作。</param>
         /// <returns>表示操作的任务。</returns>
-        public async Task NumMultiplyLoosenAsync(CancellationToken token = default)
-            => await KeyboardLoosenKeyAsync(Key.Multiply, token);
+        public Task NumMultiplyLoosenAsync(CancellationToken token = default)
+            => KeyboardLoosenKeyAsync(Key.Multiply, token);
 
         /// <summary>
         /// 按下并松开小键盘除号<br/>
         /// 该方法会模拟按下并松开小键盘除号键，通常用于数字运算或小键盘操作。</summary>
         /// <param name="token">取消令牌，用于取消操作。</param>
         /// <returns>表示操作的任务。</returns>
-        public async Task NumDivideAsync(CancellationToken token = default)
-            => await KeyboardPressAsync(Key.Divide, token);
+        public Task NumDivideAsync(CancellationToken token = default)
+            => KeyboardPressAsync(Key.Divide, token);
 
         /// <summary>
         /// 按下小键盘除号<br/>
         /// 该方法会模拟按下小键盘除号键，通常用于数字运算或小键盘操作。</summary>
         /// <param name="token">取消令牌，用于取消操作。</param>
         /// <returns>表示操作的任务。</returns>
-        public async Task NumDividePressAsync(CancellationToken token = default)
-            => await KeyboardPressKeyAsync(Key.Divide, token);
+        public Task NumDividePressAsync(CancellationToken token = default)
+            => KeyboardPressKeyAsync(Key.Divide, token);
 
         /// <summary>
         /// 松开小键盘除号<br/>
         /// 该方法会模拟松开小键盘除号键，通常用于释放按键。</summary>
         /// <param name="token">取消令牌，用于取消操作。</param>
         /// <returns>表示操作的任务。</returns>
-        public async Task NumDivideLoosenAsync(CancellationToken token = default)
-            => await KeyboardLoosenKeyAsync(Key.Divide, token);
+        public Task NumDivideLoosenAsync(CancellationToken token = default)
+            => KeyboardLoosenKeyAsync(Key.Divide, token);
 
         /// <summary>
         /// 按下并松开小键盘小数点<br/>
         /// 该方法会模拟按下并松开小键盘小数点键，通常用于数字输入或小键盘操作。</summary>
         /// <param name="token">取消令牌，用于取消操作。</param>
         /// <returns>表示操作的任务。</returns>
-        public async Task NumDecimalAsync(CancellationToken token = default)
-            => await KeyboardPressAsync(Key.Decimal, token);
+        public Task NumDecimalAsync(CancellationToken token = default)
+            => KeyboardPressAsync(Key.Decimal, token);
 
         /// <summary>
         /// 按下小键盘小数点<br/>
         /// 该方法会模拟按下小键盘小数点键，通常用于数字输入或小键盘操作。</summary>
         /// <param name="token">取消令牌，用于取消操作。</param>
         /// <returns>表示操作的任务。</returns>
-        public async Task NumDecimalPressAsync(CancellationToken token = default)
-            => await KeyboardPressKeyAsync(Key.Decimal, token);
+        public Task NumDecimalPressAsync(CancellationToken token = default)
+            => KeyboardPressKeyAsync(Key.Decimal, token);
 
         /// <summary>
         /// 松开小键盘小数点<br/>
         /// 该方法会模拟松开小键盘小数点键，通常用于释放按键。</summary>
         /// <param name="token">取消令牌，用于取消操作。</param>
         /// <returns>表示操作的任务。</returns>
-        public async Task NumDecimalLoosenAsync(CancellationToken token = default)
-            => await KeyboardLoosenKeyAsync(Key.Decimal, token);
+        public Task NumDecimalLoosenAsync(CancellationToken token = default)
+            => KeyboardLoosenKeyAsync(Key.Decimal, token);
 
         /// <summary>
         /// 模拟按下并松开 ` ~ 键
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task OemTildeAsync(CancellationToken token = default)
-            => await KeyboardPressAsync(Key.OemTilde, token);
+        public Task OemTildeAsync(CancellationToken token = default)
+            => KeyboardPressAsync(Key.OemTilde, token);
 
         /// <summary>
         /// 模拟按下 ` ~ 键
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task OemTildePressAsync(CancellationToken token = default)
-            => await KeyboardPressKeyAsync(Key.OemTilde, token);
+        public Task OemTildePressAsync(CancellationToken token = default)
+            => KeyboardPressKeyAsync(Key.OemTilde, token);
 
         /// <summary>
         /// 模拟松开 ` ~ 键
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task OemTildeLoosenAsync(CancellationToken token = default)
-            => await KeyboardLoosenKeyAsync(Key.OemTilde, token);
+        public Task OemTildeLoosenAsync(CancellationToken token = default)
+            => KeyboardLoosenKeyAsync(Key.OemTilde, token);
 
         /// <summary>
         /// 模拟按下并松开 - _ 键
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task OemMinusAsync(CancellationToken token = default)
-            => await KeyboardPressAsync(Key.OemMinus, token);
+        public Task OemMinusAsync(CancellationToken token = default)
+            => KeyboardPressAsync(Key.OemMinus, token);
 
         /// <summary>
         /// 模拟按下 - _ 键
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task OemMinusPressAsync(CancellationToken token = default)
-            => await KeyboardPressKeyAsync(Key.OemMinus, token);
+        public Task OemMinusPressAsync(CancellationToken token = default)
+            => KeyboardPressKeyAsync(Key.OemMinus, token);
 
         /// <summary>
         /// 模拟松开 - _ 键
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task OemMinusLoosenAsync(CancellationToken token = default)
-            => await KeyboardLoosenKeyAsync(Key.OemMinus, token);
+        public Task OemMinusLoosenAsync(CancellationToken token = default)
+            => KeyboardLoosenKeyAsync(Key.OemMinus, token);
 
         /// <summary>
         /// 模拟按下并松开 = + 键
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task OemPlusAsync(CancellationToken token = default)
-            => await KeyboardPressAsync(Key.OemPlus, token);
+        public Task OemPlusAsync(CancellationToken token = default)
+            => KeyboardPressAsync(Key.OemPlus, token);
 
         /// <summary>
         /// 模拟按下 = + 键
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task OemPlusPressAsync(CancellationToken token = default)
-            => await KeyboardPressKeyAsync(Key.OemPlus, token);
+        public Task OemPlusPressAsync(CancellationToken token = default)
+            => KeyboardPressKeyAsync(Key.OemPlus, token);
 
         /// <summary>
         /// 模拟松开 = + 键
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task OemPlusLoosenAsync(CancellationToken token = default)
-            => await KeyboardLoosenKeyAsync(Key.OemPlus, token);
+        public Task OemPlusLoosenAsync(CancellationToken token = default)
+            => KeyboardLoosenKeyAsync(Key.OemPlus, token);
 
         /// <summary>
         /// 模拟按下并松开 [ { 键
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task OemOpenBracketsAsync(CancellationToken token = default)
-            => await KeyboardPressAsync(Key.OemOpenBrackets, token);
+        public Task OemOpenBracketsAsync(CancellationToken token = default)
+            => KeyboardPressAsync(Key.OemOpenBrackets, token);
 
         /// <summary>
         /// 模拟按下 [ { 键
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task OemOpenBracketsPressAsync(CancellationToken token = default)
-            => await KeyboardPressKeyAsync(Key.OemOpenBrackets, token);
+        public Task OemOpenBracketsPressAsync(CancellationToken token = default)
+            => KeyboardPressKeyAsync(Key.OemOpenBrackets, token);
 
         /// <summary>
         /// 模拟松开 [ { 键
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task OemOpenBracketsLoosenAsync(CancellationToken token = default)
-            => await KeyboardLoosenKeyAsync(Key.OemOpenBrackets, token);
+        public Task OemOpenBracketsLoosenAsync(CancellationToken token = default)
+            => KeyboardLoosenKeyAsync(Key.OemOpenBrackets, token);
 
         /// <summary>
         /// 模拟按下并松开 ] } 键
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task OemCloseBracketsAsync(CancellationToken token = default)
-            => await KeyboardPressAsync(Key.OemCloseBrackets, token);
+        public Task OemCloseBracketsAsync(CancellationToken token = default)
+            => KeyboardPressAsync(Key.OemCloseBrackets, token);
 
         /// <summary>
         /// 模拟按下 ] } 键
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task OemCloseBracketsPressAsync(CancellationToken token = default)
-            => await KeyboardPressKeyAsync(Key.OemCloseBrackets, token);
+        public Task OemCloseBracketsPressAsync(CancellationToken token = default)
+            => KeyboardPressKeyAsync(Key.OemCloseBrackets, token);
 
         /// <summary>
         /// 模拟松开 ] } 键
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task OemCloseBracketsLoosenAsync(CancellationToken token = default)
-            => await KeyboardLoosenKeyAsync(Key.OemCloseBrackets, token);
+        public Task OemCloseBracketsLoosenAsync(CancellationToken token = default)
+            => KeyboardLoosenKeyAsync(Key.OemCloseBrackets, token);
 
         /// <summary>
         /// 模拟按下并松开 \ | 键
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task OemPipeAsync(CancellationToken token = default)
-            => await KeyboardPressAsync(Key.OemPipe, token);
+        public Task OemPipeAsync(CancellationToken token = default)
+            => KeyboardPressAsync(Key.OemPipe, token);
 
         /// <summary>
         /// 模拟按下 \ | 键
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task OemPipePressAsync(CancellationToken token = default)
-            => await KeyboardPressKeyAsync(Key.OemPipe, token);
+        public Task OemPipePressAsync(CancellationToken token = default)
+            => KeyboardPressKeyAsync(Key.OemPipe, token);
 
         /// <summary>
         /// 模拟松开 \ | 键
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task OemPipeLoosenAsync(CancellationToken token = default)
-            => await KeyboardLoosenKeyAsync(Key.OemPipe, token);
+        public Task OemPipeLoosenAsync(CancellationToken token = default)
+            => KeyboardLoosenKeyAsync(Key.OemPipe, token);
 
         /// <summary>
         /// 模拟按下并松开 ; : 键
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task OemSemicolonAsync(CancellationToken token = default)
-            => await KeyboardPressAsync(Key.OemSemicolon, token);
+        public Task OemSemicolonAsync(CancellationToken token = default)
+            => KeyboardPressAsync(Key.OemSemicolon, token);
 
         /// <summary>
         /// 模拟按下 ; : 键
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task OemSemicolonPressAsync(CancellationToken token = default)
-            => await KeyboardPressKeyAsync(Key.OemSemicolon, token);
+        public Task OemSemicolonPressAsync(CancellationToken token = default)
+            => KeyboardPressKeyAsync(Key.OemSemicolon, token);
 
         /// <summary>
         /// 模拟松开 ; : 键
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task OemSemicolonLoosenAsync(CancellationToken token = default)
-            => await KeyboardLoosenKeyAsync(Key.OemSemicolon, token);
+        public Task OemSemicolonLoosenAsync(CancellationToken token = default)
+            => KeyboardLoosenKeyAsync(Key.OemSemicolon, token);
 
         /// <summary>
         /// 模拟按下并松开 ' " 键
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task OemQuotesAsync(CancellationToken token = default)
-            => await KeyboardPressAsync(Key.OemQuotes, token);
+        public Task OemQuotesAsync(CancellationToken token = default)
+            => KeyboardPressAsync(Key.OemQuotes, token);
 
         /// <summary>
         /// 模拟按下 ' " 键
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task OemQuotesPressAsync(CancellationToken token = default)
-            => await KeyboardPressKeyAsync(Key.OemQuotes, token);
+        public Task OemQuotesPressAsync(CancellationToken token = default)
+            => KeyboardPressKeyAsync(Key.OemQuotes, token);
 
         /// <summary>
         /// 模拟松开 ' " 键
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task OemQuotesLoosenAsync(CancellationToken token = default)
-            => await KeyboardLoosenKeyAsync(Key.OemQuotes, token);
+        public Task OemQuotesLoosenAsync(CancellationToken token = default)
+            => KeyboardLoosenKeyAsync(Key.OemQuotes, token);
 
         /// <summary>
         /// 模拟按下并松开 , ＜ 键
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task OemCommaAsync(CancellationToken token = default)
-            => await KeyboardPressAsync(Key.OemComma, token);
+        public Task OemCommaAsync(CancellationToken token = default)
+            => KeyboardPressAsync(Key.OemComma, token);
 
         /// <summary>
         /// 模拟按下 , ＜ 键
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task OemCommaPressAsync(CancellationToken token = default)
-            => await KeyboardPressKeyAsync(Key.OemComma, token);
+        public Task OemCommaPressAsync(CancellationToken token = default)
+            => KeyboardPressKeyAsync(Key.OemComma, token);
 
         /// <summary>
         /// 模拟松开 , ＜ 键
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task OemCommaLoosenAsync(CancellationToken token = default)
-            => await KeyboardLoosenKeyAsync(Key.OemComma, token);
+        public Task OemCommaLoosenAsync(CancellationToken token = default)
+            => KeyboardLoosenKeyAsync(Key.OemComma, token);
 
         /// <summary>
         /// 模拟按下并松开 . > 键
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task OemPeriodAsync(CancellationToken token = default)
-            => await KeyboardPressAsync(Key.OemPeriod, token);
+        public Task OemPeriodAsync(CancellationToken token = default)
+            => KeyboardPressAsync(Key.OemPeriod, token);
 
         /// <summary>
         /// 模拟按下 . > 键
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task OemPeriodPressAsync(CancellationToken token = default)
-            => await KeyboardPressKeyAsync(Key.OemPeriod, token);
+        public Task OemPeriodPressAsync(CancellationToken token = default)
+            => KeyboardPressKeyAsync(Key.OemPeriod, token);
 
         /// <summary>
         /// 模拟松开 . > 键
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task OemPeriodLoosenAsync(CancellationToken token = default)
-            => await KeyboardLoosenKeyAsync(Key.OemPeriod, token);
+        public Task OemPeriodLoosenAsync(CancellationToken token = default)
+            => KeyboardLoosenKeyAsync(Key.OemPeriod, token);
 
         /// <summary>
         /// 模拟按下并松开 / ? 键
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task OemQuestionAsync(CancellationToken token = default)
-            => await KeyboardPressAsync(Key.OemQuestion, token);
+        public Task OemQuestionAsync(CancellationToken token = default)
+            => KeyboardPressAsync(Key.OemQuestion, token);
 
         /// <summary>
         /// 模拟按下 / ? 键
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task OemQuestionPressAsync(CancellationToken token = default)
-            => await KeyboardPressKeyAsync(Key.OemQuestion, token);
+        public Task OemQuestionPressAsync(CancellationToken token = default)
+            => KeyboardPressKeyAsync(Key.OemQuestion, token);
 
         /// <summary>
         /// 模拟松开 / ? 键
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task OemQuestionLoosenAsync(CancellationToken token = default)
-            => await KeyboardLoosenKeyAsync(Key.OemQuestion, token);
+        public Task OemQuestionLoosenAsync(CancellationToken token = default)
+            => KeyboardLoosenKeyAsync(Key.OemQuestion, token);
 
         #endregion
 
@@ -2207,624 +2201,624 @@ namespace Snet.Windows.KMSim.core
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task AAsync(CancellationToken token = default)
-            => await KeyboardPressAsync(Key.A, token);
+        public Task AAsync(CancellationToken token = default)
+            => KeyboardPressAsync(Key.A, token);
 
         /// <summary>
         /// 模拟按下键盘上的 A 键
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task APressAsync(CancellationToken token = default)
-            => await KeyboardPressKeyAsync(Key.A, token);
+        public Task APressAsync(CancellationToken token = default)
+            => KeyboardPressKeyAsync(Key.A, token);
 
         /// <summary>
         /// 模拟松开键盘上的 A 键
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task ALoosenAsync(CancellationToken token = default)
-            => await KeyboardLoosenKeyAsync(Key.A, token);
+        public Task ALoosenAsync(CancellationToken token = default)
+            => KeyboardLoosenKeyAsync(Key.A, token);
 
         /// <summary>
         /// 模拟按下并松开键盘上的 B 键
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task BAsync(CancellationToken token = default)
-            => await KeyboardPressAsync(Key.B, token);
+        public Task BAsync(CancellationToken token = default)
+            => KeyboardPressAsync(Key.B, token);
 
         /// <summary>
         /// 模拟按下键盘上的 B 键
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task BPressAsync(CancellationToken token = default)
-            => await KeyboardPressKeyAsync(Key.B, token);
+        public Task BPressAsync(CancellationToken token = default)
+            => KeyboardPressKeyAsync(Key.B, token);
 
         /// <summary>
         /// 模拟松开键盘上的 B 键
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task BLoosenAsync(CancellationToken token = default)
-            => await KeyboardLoosenKeyAsync(Key.B, token);
+        public Task BLoosenAsync(CancellationToken token = default)
+            => KeyboardLoosenKeyAsync(Key.B, token);
 
         /// <summary>
         /// 模拟按下并松开键盘上的 C 键
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task CAsync(CancellationToken token = default)
-            => await KeyboardPressAsync(Key.C, token);
+        public Task CAsync(CancellationToken token = default)
+            => KeyboardPressAsync(Key.C, token);
 
         /// <summary>
         /// 模拟按下键盘上的 C 键
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task CPressAsync(CancellationToken token = default)
-            => await KeyboardPressKeyAsync(Key.C, token);
+        public Task CPressAsync(CancellationToken token = default)
+            => KeyboardPressKeyAsync(Key.C, token);
 
         /// <summary>
         /// 模拟松开键盘上的 C 键
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task CLoosenAsync(CancellationToken token = default)
-            => await KeyboardLoosenKeyAsync(Key.C, token);
+        public Task CLoosenAsync(CancellationToken token = default)
+            => KeyboardLoosenKeyAsync(Key.C, token);
 
         /// <summary>
         /// 模拟按下并松开键盘上的 D 键
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task DAsync(CancellationToken token = default)
-            => await KeyboardPressAsync(Key.D, token);
+        public Task DAsync(CancellationToken token = default)
+            => KeyboardPressAsync(Key.D, token);
 
         /// <summary>
         /// 模拟按下键盘上的 D 键
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task DPressAsync(CancellationToken token = default)
-            => await KeyboardPressKeyAsync(Key.D, token);
+        public Task DPressAsync(CancellationToken token = default)
+            => KeyboardPressKeyAsync(Key.D, token);
 
         /// <summary>
         /// 模拟松开键盘上的 D 键
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task DLoosenAsync(CancellationToken token = default)
-            => await KeyboardLoosenKeyAsync(Key.D, token);
+        public Task DLoosenAsync(CancellationToken token = default)
+            => KeyboardLoosenKeyAsync(Key.D, token);
 
         /// <summary>
         /// 模拟按下并松开键盘上的 E 键
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task EAsync(CancellationToken token = default)
-            => await KeyboardPressAsync(Key.E, token);
+        public Task EAsync(CancellationToken token = default)
+            => KeyboardPressAsync(Key.E, token);
 
         /// <summary>
         /// 模拟按下键盘上的 E 键
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task EPressAsync(CancellationToken token = default)
-            => await KeyboardPressKeyAsync(Key.E, token);
+        public Task EPressAsync(CancellationToken token = default)
+            => KeyboardPressKeyAsync(Key.E, token);
 
         /// <summary>
         /// 模拟松开键盘上的 E 键
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task ELoosenAsync(CancellationToken token = default)
-            => await KeyboardLoosenKeyAsync(Key.E, token);
+        public Task ELoosenAsync(CancellationToken token = default)
+            => KeyboardLoosenKeyAsync(Key.E, token);
 
         /// <summary>
         /// 模拟按下并松开键盘上的 F 键
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task FAsync(CancellationToken token = default)
-            => await KeyboardPressAsync(Key.F, token);
+        public Task FAsync(CancellationToken token = default)
+            => KeyboardPressAsync(Key.F, token);
 
         /// <summary>
         /// 模拟按下键盘上的 F 键
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task FPressAsync(CancellationToken token = default)
-            => await KeyboardPressKeyAsync(Key.F, token);
+        public Task FPressAsync(CancellationToken token = default)
+            => KeyboardPressKeyAsync(Key.F, token);
 
         /// <summary>
         /// 模拟松开键盘上的 F 键
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task FLoosenAsync(CancellationToken token = default)
-            => await KeyboardLoosenKeyAsync(Key.F, token);
+        public Task FLoosenAsync(CancellationToken token = default)
+            => KeyboardLoosenKeyAsync(Key.F, token);
 
         /// <summary>
         /// 模拟按下并松开键盘上的 G 键
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task GAsync(CancellationToken token = default)
-            => await KeyboardPressAsync(Key.G, token);
+        public Task GAsync(CancellationToken token = default)
+            => KeyboardPressAsync(Key.G, token);
 
         /// <summary>
         /// 模拟按下键盘上的 G 键
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task GPressAsync(CancellationToken token = default)
-            => await KeyboardPressKeyAsync(Key.G, token);
+        public Task GPressAsync(CancellationToken token = default)
+            => KeyboardPressKeyAsync(Key.G, token);
 
         /// <summary>
         /// 模拟松开键盘上的 G 键
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task GLoosenAsync(CancellationToken token = default)
-            => await KeyboardLoosenKeyAsync(Key.G, token);
+        public Task GLoosenAsync(CancellationToken token = default)
+            => KeyboardLoosenKeyAsync(Key.G, token);
 
         /// <summary>
         /// 模拟按下并松开键盘上的 H 键
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task HAsync(CancellationToken token = default)
-            => await KeyboardPressAsync(Key.H, token);
+        public Task HAsync(CancellationToken token = default)
+            => KeyboardPressAsync(Key.H, token);
 
         /// <summary>
         /// 模拟按下键盘上的 H 键
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task HPressAsync(CancellationToken token = default)
-            => await KeyboardPressKeyAsync(Key.H, token);
+        public Task HPressAsync(CancellationToken token = default)
+            => KeyboardPressKeyAsync(Key.H, token);
 
         /// <summary>
         /// 模拟松开键盘上的 H 键
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task HLoosenAsync(CancellationToken token = default)
-            => await KeyboardLoosenKeyAsync(Key.H, token);
+        public Task HLoosenAsync(CancellationToken token = default)
+            => KeyboardLoosenKeyAsync(Key.H, token);
 
         /// <summary>
         /// 模拟按下并松开键盘上的 I 键
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task IAsync(CancellationToken token = default)
-            => await KeyboardPressAsync(Key.I, token);
+        public Task IAsync(CancellationToken token = default)
+            => KeyboardPressAsync(Key.I, token);
 
         /// <summary>
         /// 模拟按下键盘上的 I 键
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task IPressAsync(CancellationToken token = default)
-            => await KeyboardPressKeyAsync(Key.I, token);
+        public Task IPressAsync(CancellationToken token = default)
+            => KeyboardPressKeyAsync(Key.I, token);
 
         /// <summary>
         /// 模拟松开键盘上的 I 键
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task ILoosenAsync(CancellationToken token = default)
-            => await KeyboardLoosenKeyAsync(Key.I, token);
+        public Task ILoosenAsync(CancellationToken token = default)
+            => KeyboardLoosenKeyAsync(Key.I, token);
 
         /// <summary>
         /// 模拟按下并松开键盘上的 J 键
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task JAsync(CancellationToken token = default)
-            => await KeyboardPressAsync(Key.J, token);
+        public Task JAsync(CancellationToken token = default)
+            => KeyboardPressAsync(Key.J, token);
 
         /// <summary>
         /// 模拟按下键盘上的 J 键
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task JPressAsync(CancellationToken token = default)
-            => await KeyboardPressKeyAsync(Key.J, token);
+        public Task JPressAsync(CancellationToken token = default)
+            => KeyboardPressKeyAsync(Key.J, token);
 
         /// <summary>
         /// 模拟松开键盘上的 J 键
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task JLoosenAsync(CancellationToken token = default)
-            => await KeyboardLoosenKeyAsync(Key.J, token);
+        public Task JLoosenAsync(CancellationToken token = default)
+            => KeyboardLoosenKeyAsync(Key.J, token);
 
         /// <summary>
         /// 模拟按下并松开键盘上的 K 键
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task KAsync(CancellationToken token = default)
-            => await KeyboardPressAsync(Key.K, token);
+        public Task KAsync(CancellationToken token = default)
+            => KeyboardPressAsync(Key.K, token);
 
         /// <summary>
         /// 模拟按下键盘上的 K 键
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task KPressAsync(CancellationToken token = default)
-            => await KeyboardPressKeyAsync(Key.K, token);
+        public Task KPressAsync(CancellationToken token = default)
+            => KeyboardPressKeyAsync(Key.K, token);
 
         /// <summary>
         /// 模拟松开键盘上的 K 键
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task KLoosenAsync(CancellationToken token = default)
-            => await KeyboardLoosenKeyAsync(Key.K, token);
+        public Task KLoosenAsync(CancellationToken token = default)
+            => KeyboardLoosenKeyAsync(Key.K, token);
 
         /// <summary>
         /// 模拟按下并松开键盘上的 L 键
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task LAsync(CancellationToken token = default)
-            => await KeyboardPressAsync(Key.L, token);
+        public Task LAsync(CancellationToken token = default)
+            => KeyboardPressAsync(Key.L, token);
 
         /// <summary>
         /// 模拟按下键盘上的 L 键
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task LPressAsync(CancellationToken token = default)
-            => await KeyboardPressKeyAsync(Key.L, token);
+        public Task LPressAsync(CancellationToken token = default)
+            => KeyboardPressKeyAsync(Key.L, token);
 
         /// <summary>
         /// 模拟松开键盘上的 L 键
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task LLoosenAsync(CancellationToken token = default)
-            => await KeyboardLoosenKeyAsync(Key.L, token);
+        public Task LLoosenAsync(CancellationToken token = default)
+            => KeyboardLoosenKeyAsync(Key.L, token);
 
         /// <summary>
         /// 模拟按下并松开键盘上的 M 键
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task MAsync(CancellationToken token = default)
-            => await KeyboardPressAsync(Key.M, token);
+        public Task MAsync(CancellationToken token = default)
+            => KeyboardPressAsync(Key.M, token);
 
         /// <summary>
         /// 模拟按下键盘上的 M 键
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task MPressAsync(CancellationToken token = default)
-            => await KeyboardPressKeyAsync(Key.M, token);
+        public Task MPressAsync(CancellationToken token = default)
+            => KeyboardPressKeyAsync(Key.M, token);
 
         /// <summary>
         /// 模拟松开键盘上的 M 键
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task MLoosenAsync(CancellationToken token = default)
-            => await KeyboardLoosenKeyAsync(Key.M, token);
+        public Task MLoosenAsync(CancellationToken token = default)
+            => KeyboardLoosenKeyAsync(Key.M, token);
 
         /// <summary>
         /// 模拟按下并松开键盘上的 N 键
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task NAsync(CancellationToken token = default)
-            => await KeyboardPressAsync(Key.N, token);
+        public Task NAsync(CancellationToken token = default)
+            => KeyboardPressAsync(Key.N, token);
 
         /// <summary>
         /// 模拟按下键盘上的 N 键
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task NPressAsync(CancellationToken token = default)
-            => await KeyboardPressKeyAsync(Key.N, token);
+        public Task NPressAsync(CancellationToken token = default)
+            => KeyboardPressKeyAsync(Key.N, token);
 
         /// <summary>
         /// 模拟松开键盘上的 N 键
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task NLoosenAsync(CancellationToken token = default)
-            => await KeyboardLoosenKeyAsync(Key.N, token);
+        public Task NLoosenAsync(CancellationToken token = default)
+            => KeyboardLoosenKeyAsync(Key.N, token);
 
         /// <summary>
         /// 模拟按下并松开键盘上的 O 键
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task OAsync(CancellationToken token = default)
-            => await KeyboardPressAsync(Key.O, token);
+        public Task OAsync(CancellationToken token = default)
+            => KeyboardPressAsync(Key.O, token);
 
         /// <summary>
         /// 模拟按下键盘上的 O 键
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task OPressAsync(CancellationToken token = default)
-            => await KeyboardPressKeyAsync(Key.O, token);
+        public Task OPressAsync(CancellationToken token = default)
+            => KeyboardPressKeyAsync(Key.O, token);
 
         /// <summary>
         /// 模拟松开键盘上的 O 键
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task OLoosenAsync(CancellationToken token = default)
-            => await KeyboardLoosenKeyAsync(Key.O, token);
+        public Task OLoosenAsync(CancellationToken token = default)
+            => KeyboardLoosenKeyAsync(Key.O, token);
 
         /// <summary>
         /// 模拟按下并松开键盘上的 P 键
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task PAsync(CancellationToken token = default)
-            => await KeyboardPressAsync(Key.P, token);
+        public Task PAsync(CancellationToken token = default)
+            => KeyboardPressAsync(Key.P, token);
 
         /// <summary>
         /// 模拟按下键盘上的 P 键
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task PPressAsync(CancellationToken token = default)
-            => await KeyboardPressKeyAsync(Key.P, token);
+        public Task PPressAsync(CancellationToken token = default)
+            => KeyboardPressKeyAsync(Key.P, token);
 
         /// <summary>
         /// 模拟松开键盘上的 P 键
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task PLoosenAsync(CancellationToken token = default)
-            => await KeyboardLoosenKeyAsync(Key.P, token);
+        public Task PLoosenAsync(CancellationToken token = default)
+            => KeyboardLoosenKeyAsync(Key.P, token);
 
         /// <summary>
         /// 模拟按下并松开键盘上的 Q 键
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task QAsync(CancellationToken token = default)
-            => await KeyboardPressAsync(Key.Q, token);
+        public Task QAsync(CancellationToken token = default)
+            => KeyboardPressAsync(Key.Q, token);
 
         /// <summary>
         /// 模拟按下键盘上的 Q 键
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task QPressAsync(CancellationToken token = default)
-            => await KeyboardPressKeyAsync(Key.Q, token);
+        public Task QPressAsync(CancellationToken token = default)
+            => KeyboardPressKeyAsync(Key.Q, token);
 
         /// <summary>
         /// 模拟松开键盘上的 Q 键
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task QLoosenAsync(CancellationToken token = default)
-            => await KeyboardLoosenKeyAsync(Key.Q, token);
+        public Task QLoosenAsync(CancellationToken token = default)
+            => KeyboardLoosenKeyAsync(Key.Q, token);
 
         /// <summary>
         /// 模拟按下并松开键盘上的 R 键
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task RAsync(CancellationToken token = default)
-            => await KeyboardPressAsync(Key.R, token);
+        public Task RAsync(CancellationToken token = default)
+            => KeyboardPressAsync(Key.R, token);
 
         /// <summary>
         /// 模拟按下键盘上的 R 键
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task RPressAsync(CancellationToken token = default)
-            => await KeyboardPressKeyAsync(Key.R, token);
+        public Task RPressAsync(CancellationToken token = default)
+            => KeyboardPressKeyAsync(Key.R, token);
 
         /// <summary>
         /// 模拟松开键盘上的 R 键
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task RLoosenAsync(CancellationToken token = default)
-            => await KeyboardLoosenKeyAsync(Key.R, token);
+        public Task RLoosenAsync(CancellationToken token = default)
+            => KeyboardLoosenKeyAsync(Key.R, token);
 
         /// <summary>
         /// 模拟按下并松开键盘上的 S 键
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task SAsync(CancellationToken token = default)
-            => await KeyboardPressAsync(Key.S, token);
+        public Task SAsync(CancellationToken token = default)
+            => KeyboardPressAsync(Key.S, token);
 
         /// <summary>
         /// 模拟按下键盘上的 S 键
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task SPressAsync(CancellationToken token = default)
-            => await KeyboardPressKeyAsync(Key.S, token);
+        public Task SPressAsync(CancellationToken token = default)
+            => KeyboardPressKeyAsync(Key.S, token);
 
         /// <summary>
         /// 模拟松开键盘上的 S 键
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task SLoosenAsync(CancellationToken token = default)
-            => await KeyboardLoosenKeyAsync(Key.S, token);
+        public Task SLoosenAsync(CancellationToken token = default)
+            => KeyboardLoosenKeyAsync(Key.S, token);
 
         /// <summary>
         /// 模拟按下并松开键盘上的 T 键
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task TAsync(CancellationToken token = default)
-            => await KeyboardPressAsync(Key.T, token);
+        public Task TAsync(CancellationToken token = default)
+            => KeyboardPressAsync(Key.T, token);
 
         /// <summary>
         /// 模拟按下键盘上的 T 键
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task TPressAsync(CancellationToken token = default)
-            => await KeyboardPressKeyAsync(Key.T, token);
+        public Task TPressAsync(CancellationToken token = default)
+            => KeyboardPressKeyAsync(Key.T, token);
 
         /// <summary>
         /// 模拟松开键盘上的 T 键
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task TLoosenAsync(CancellationToken token = default)
-            => await KeyboardLoosenKeyAsync(Key.T, token);
+        public Task TLoosenAsync(CancellationToken token = default)
+            => KeyboardLoosenKeyAsync(Key.T, token);
 
         /// <summary>
         /// 模拟按下并松开键盘上的 U 键
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task UAsync(CancellationToken token = default)
-            => await KeyboardPressAsync(Key.U, token);
+        public Task UAsync(CancellationToken token = default)
+            => KeyboardPressAsync(Key.U, token);
 
         /// <summary>
         /// 模拟按下键盘上的 U 键
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task UPressAsync(CancellationToken token = default)
-            => await KeyboardPressKeyAsync(Key.U, token);
+        public Task UPressAsync(CancellationToken token = default)
+            => KeyboardPressKeyAsync(Key.U, token);
 
         /// <summary>
         /// 模拟松开键盘上的 U 键
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task ULoosenAsync(CancellationToken token = default)
-            => await KeyboardLoosenKeyAsync(Key.U, token);
+        public Task ULoosenAsync(CancellationToken token = default)
+            => KeyboardLoosenKeyAsync(Key.U, token);
 
         /// <summary>
         /// 模拟按下并松开键盘上的 V 键
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task VAsync(CancellationToken token = default)
-            => await KeyboardPressAsync(Key.V, token);
+        public Task VAsync(CancellationToken token = default)
+            => KeyboardPressAsync(Key.V, token);
 
         /// <summary>
         /// 模拟按下键盘上的 V 键
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task VPressAsync(CancellationToken token = default)
-            => await KeyboardPressKeyAsync(Key.V, token);
+        public Task VPressAsync(CancellationToken token = default)
+            => KeyboardPressKeyAsync(Key.V, token);
 
         /// <summary>
         /// 模拟松开键盘上的 V 键
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task VLoosenAsync(CancellationToken token = default)
-            => await KeyboardLoosenKeyAsync(Key.V, token);
+        public Task VLoosenAsync(CancellationToken token = default)
+            => KeyboardLoosenKeyAsync(Key.V, token);
 
         /// <summary>
         /// 模拟按下并松开键盘上的 W 键
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task WAsync(CancellationToken token = default)
-            => await KeyboardPressAsync(Key.W, token);
+        public Task WAsync(CancellationToken token = default)
+            => KeyboardPressAsync(Key.W, token);
 
         /// <summary>
         /// 模拟按下键盘上的 W 键
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task WPressAsync(CancellationToken token = default)
-            => await KeyboardPressKeyAsync(Key.W, token);
+        public Task WPressAsync(CancellationToken token = default)
+            => KeyboardPressKeyAsync(Key.W, token);
 
         /// <summary>
         /// 模拟松开键盘上的 W 键
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task WLoosenAsync(CancellationToken token = default)
-            => await KeyboardLoosenKeyAsync(Key.W, token);
+        public Task WLoosenAsync(CancellationToken token = default)
+            => KeyboardLoosenKeyAsync(Key.W, token);
 
         /// <summary>
         /// 模拟按下并松开键盘上的 X 键
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task XAsync(CancellationToken token = default)
-            => await KeyboardPressAsync(Key.X, token);
+        public Task XAsync(CancellationToken token = default)
+            => KeyboardPressAsync(Key.X, token);
 
         /// <summary>
         /// 模拟按下键盘上的 X 键
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task XPressAsync(CancellationToken token = default)
-            => await KeyboardPressKeyAsync(Key.X, token);
+        public Task XPressAsync(CancellationToken token = default)
+            => KeyboardPressKeyAsync(Key.X, token);
 
         /// <summary>
         /// 模拟松开键盘上的 X 键
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task XLoosenAsync(CancellationToken token = default)
-            => await KeyboardLoosenKeyAsync(Key.X, token);
+        public Task XLoosenAsync(CancellationToken token = default)
+            => KeyboardLoosenKeyAsync(Key.X, token);
 
         /// <summary>
         /// 模拟按下并松开键盘上的 Y 键
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task YAsync(CancellationToken token = default)
-            => await KeyboardPressAsync(Key.Y, token);
+        public Task YAsync(CancellationToken token = default)
+            => KeyboardPressAsync(Key.Y, token);
 
         /// <summary>
         /// 模拟按下键盘上的 Y 键
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task YPressAsync(CancellationToken token = default)
-            => await KeyboardPressKeyAsync(Key.Y, token);
+        public Task YPressAsync(CancellationToken token = default)
+            => KeyboardPressKeyAsync(Key.Y, token);
 
         /// <summary>
         /// 模拟松开键盘上的 Y 键
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task YLoosenAsync(CancellationToken token = default)
-            => await KeyboardLoosenKeyAsync(Key.Y, token);
+        public Task YLoosenAsync(CancellationToken token = default)
+            => KeyboardLoosenKeyAsync(Key.Y, token);
 
         /// <summary>
         /// 模拟按下并松开键盘上的 Z 键
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task ZAsync(CancellationToken token = default)
-            => await KeyboardPressAsync(Key.Z, token);
+        public Task ZAsync(CancellationToken token = default)
+            => KeyboardPressAsync(Key.Z, token);
 
         /// <summary>
         /// 模拟按下键盘上的 Z 键
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task ZPressAsync(CancellationToken token = default)
-            => await KeyboardPressKeyAsync(Key.Z, token);
+        public Task ZPressAsync(CancellationToken token = default)
+            => KeyboardPressKeyAsync(Key.Z, token);
 
         /// <summary>
         /// 模拟松开键盘上的 Z 键
         /// </summary>
         /// <param name="token">取消令牌，用于取消操作</param>
         /// <returns>表示操作的任务</returns>
-        public async Task ZLoosenAsync(CancellationToken token = default)
-            => await KeyboardLoosenKeyAsync(Key.Z, token);
+        public Task ZLoosenAsync(CancellationToken token = default)
+            => KeyboardLoosenKeyAsync(Key.Z, token);
 
 
         /// <summary>
@@ -2940,13 +2934,10 @@ namespace Snet.Windows.KMSim.core
         /// <param name="key">键值</param>
         /// <param name="token">取消通知</param>
         /// <returns>按下返回true，未按下返回false</returns>
-        private async Task<bool> GetKeyStateAsync(Key key, CancellationToken token = default)
+        private Task<bool> GetKeyStateAsync(Key key, CancellationToken token = default)
         {
-            return await Task.Run(() =>
-            {
-                byte vk = (byte)KeyInterop.VirtualKeyFromKey(key);
-                return (Win32.GetKeyState(vk) == 1);
-            }, token);
+            byte vk = (byte)KeyInterop.VirtualKeyFromKey(key);
+            return Task.FromResult(Win32.GetKeyState(vk) == 1);
         }
 
         /// <summary>
@@ -2956,11 +2947,8 @@ namespace Snet.Windows.KMSim.core
         /// <param name="token">取消通知</param>
         private async Task KeyboardPressKeyAsync(byte key, CancellationToken token = default)
         {
-            await Task.Run(async () =>
-            {
-                Win32.keybd_event(key, 0, 0, 0);
-                await Task.Delay(ConfigModel.RestTime, token);
-            }, token);
+            Win32.keybd_event(key, 0, 0, 0);
+            await Task.Delay(ConfigModel.RestTime, token);
         }
         /// <summary>
         /// 松开
@@ -2969,11 +2957,8 @@ namespace Snet.Windows.KMSim.core
         /// <param name="token">取消通知</param>
         private async Task KeyboardLoosenKeyAsync(byte key, CancellationToken token = default)
         {
-            await Task.Run(async () =>
-            {
-                Win32.keybd_event(key, 0, Win32.KEYEVENTF_KEYUP, 0);
-                await Task.Delay(ConfigModel.RestTime, token);
-            }, token);
+            Win32.keybd_event(key, 0, Win32.KEYEVENTF_KEYUP, 0);
+            await Task.Delay(ConfigModel.RestTime, token);
         }
 
         /// <summary>
@@ -2983,12 +2968,9 @@ namespace Snet.Windows.KMSim.core
         /// <param name="token">取消通知</param>
         private async Task KeyboardPressKeyAsync(Key key, CancellationToken token = default)
         {
-            await Task.Run(async () =>
-            {
-                byte vk = (byte)KeyInterop.VirtualKeyFromKey(key);
-                Win32.keybd_event(vk, 0, 0, 0);
-                await Task.Delay(ConfigModel.RestTime, token);
-            }, token);
+            byte vk = (byte)KeyInterop.VirtualKeyFromKey(key);
+            Win32.keybd_event(vk, 0, 0, 0);
+            await Task.Delay(ConfigModel.RestTime, token);
         }
         /// <summary>
         /// 松开
@@ -2997,12 +2979,9 @@ namespace Snet.Windows.KMSim.core
         /// <param name="token">取消通知</param>
         private async Task KeyboardLoosenKeyAsync(Key key, CancellationToken token = default)
         {
-            await Task.Run(async () =>
-            {
-                byte vk = (byte)KeyInterop.VirtualKeyFromKey(key);
-                Win32.keybd_event(vk, 0, Win32.KEYEVENTF_KEYUP, 0);
-                await Task.Delay(ConfigModel.RestTime, token);
-            }, token);
+            byte vk = (byte)KeyInterop.VirtualKeyFromKey(key);
+            Win32.keybd_event(vk, 0, Win32.KEYEVENTF_KEYUP, 0);
+            await Task.Delay(ConfigModel.RestTime, token);
         }
         #endregion
         #endregion
