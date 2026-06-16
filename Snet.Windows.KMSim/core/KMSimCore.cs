@@ -16,10 +16,10 @@ namespace Snet.Windows.KMSim.core
         /// <param name="hWnd">句柄</param>
         /// <param name="token">取消通知</param>
         /// <returns>宽度</returns>
-        public Task<int> GetWindowWidthAsync(IntPtr hWnd, CancellationToken token = default)
+        public async Task<int> GetWindowWidthAsync(IntPtr hWnd, CancellationToken token = default)
         {
             (int Width, int Height) data = Win32.GetWindowSize(hWnd);
-            return Task.FromResult(data.Width);
+            return await Task.FromResult(data.Width).ConfigureAwait(false);
         }
         /// <summary>
         /// 获取窗体的高度
@@ -27,10 +27,10 @@ namespace Snet.Windows.KMSim.core
         /// <param name="hWnd">句柄</param>
         /// <param name="token">取消通知</param>
         /// <returns></returns>
-        public Task<int> GetWindowHeightAsync(IntPtr hWnd, CancellationToken token = default)
+        public async Task<int> GetWindowHeightAsync(IntPtr hWnd, CancellationToken token = default)
         {
             (int Width, int Height) data = Win32.GetWindowSize(hWnd);
-            return Task.FromResult(data.Height);
+            return await Task.FromResult(data.Height).ConfigureAwait(false);
         }
 
         /// <summary>
@@ -2934,10 +2934,10 @@ namespace Snet.Windows.KMSim.core
         /// <param name="key">键值</param>
         /// <param name="token">取消通知</param>
         /// <returns>按下返回true，未按下返回false</returns>
-        private Task<bool> GetKeyStateAsync(Key key, CancellationToken token = default)
+        private async Task<bool> GetKeyStateAsync(Key key, CancellationToken token = default)
         {
             byte vk = (byte)KeyInterop.VirtualKeyFromKey(key);
-            return Task.FromResult(Win32.GetKeyState(vk) == 1);
+            return await Task.FromResult(Win32.GetKeyState(vk) == 1).ConfigureAwait(false);
         }
 
         /// <summary>
