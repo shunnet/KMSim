@@ -13,7 +13,7 @@ namespace Snet.Windows.KMSim
         public MainWindow(GlobalKeyboardHook hook)
         {
             InitializeComponent();
-            new EditHandler(edit, App.EditModels, maxCompletionRows: 10, color: ("#414141", "#FFFFFF"));
+            new EditHandler(edit, App.EditModels, maxCompletionRows: 10, color: ("#414141", "#FEFEFE"));
             this.Closing += (object? sender, System.ComponentModel.CancelEventArgs e) =>
             {
                 _ = this.DataContext.GetSource<MainWindowViewModel>().ExitAsync().ConfigureAwait(false);
