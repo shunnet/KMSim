@@ -8,10 +8,12 @@
 		<UseWPF>true</UseWPF>
 		<GenerateDocumentationFile>true</GenerateDocumentationFile>
 		<SatelliteResourceLanguages>zh-Hans;en</SatelliteResourceLanguages>
-		<Version>1.0.0.3</Version>
+		<Version>1.0.0.4</Version>
 		<ApplicationIcon>icon.ico</ApplicationIcon>
 		<PackageLicenseExpression>MIT</PackageLicenseExpression>
 		<PackageReadmeFile>README.md</PackageReadmeFile>
+		<Deterministic>true</Deterministic>
+		<ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
 	</PropertyGroup>
 	<ItemGroup>
 		<None Include="..\README.md" Pack="true" PackagePath="\" />
