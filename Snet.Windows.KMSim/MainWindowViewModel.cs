@@ -300,7 +300,7 @@ PasteAsync
 DelayAsync = 1000
 EnterAsync
 DelayAsync = 1000
-CopyContentAsync = 欢迎使用 Shunnet.top 键鼠模拟器 
+CopyContentAsync = 欢迎使用 Snet.cn 键鼠模拟器 
 PasteAsync
 DelayAsync = 2000
 SelectAllAsync
@@ -571,7 +571,7 @@ EnterAsync
         {
             Process.Start(new ProcessStartInfo
             {
-                FileName = "https://blog.shunnet.top/",
+                FileName = "https://blog.snet.cn/",
                 UseShellExecute = true
             });
         }
@@ -584,7 +584,7 @@ EnterAsync
         {
             Process.Start(new ProcessStartInfo
             {
-                FileName = "https://blog.shunnet.top/leaveword",
+                FileName = "https://blog.snet.cn/leaveword",
                 UseShellExecute = true
             });
         }

@@ -61,7 +61,7 @@ namespace Snet.Windows.KMSim {
         }
         
         /// <summary>
-        ///   查找类似 [ Shunnet.top ] Windows 键鼠模拟工具 的本地化字符串。
+        ///   查找类似 [ Snet.cn ] Windows 键鼠模拟工具 的本地化字符串。
         /// </summary>
         internal static string SystemTitle {
             get {
@@ -187,7 +187,7 @@ namespace Snet.Windows.KMSim {
         }
         
         /// <summary>
-        ///   查找类似 [ Shunnet.top ] Windows 键鼠模拟工具 - 命令查找窗口 的本地化字符串。
+        ///   查找类似 [ Snet.cn ] Windows 键鼠模拟工具 - 命令查找窗口 的本地化字符串。
         /// </summary>
         internal static string 命令查找窗口 {
             get {

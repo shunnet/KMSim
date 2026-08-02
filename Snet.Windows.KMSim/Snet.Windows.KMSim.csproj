@@ -8,7 +8,7 @@
 		<UseWPF>true</UseWPF>
 		<GenerateDocumentationFile>true</GenerateDocumentationFile>
 		<SatelliteResourceLanguages>zh-Hans;en</SatelliteResourceLanguages>
-		<Version>1.0.0.5</Version>
+		<Version>1.0.0.6</Version>
 		<ApplicationIcon>icon.ico</ApplicationIcon>
 		<PackageLicenseExpression>MIT</PackageLicenseExpression>
 		<PackageReadmeFile>README.md</PackageReadmeFile>
@@ -24,7 +24,7 @@
 	<ItemGroup>
 		<PackageReference Include="LibreHardwareMonitorLib" Version="0.9.6" />
 		<PackageReference Include="ScottPlot.WPF" Version="5.1.59" />
-		<PackageReference Include="Snet.Windows.Controls" Version="26.212.1" />
+		<PackageReference Include="Snet.Windows.Controls" Version="26.214.1" />
 	</ItemGroup>
 
 	<ItemGroup>

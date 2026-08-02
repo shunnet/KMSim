@@ -1,7 +1,7 @@
 <h1 align="center">KMSim</h1>
 
 <p align="center">
-  <img width="120" height="120" src="https://api.shunnet.top/pic/nuget.png" alt="Snet Logo"/>
+  <img width="120" height="120" src="https://api.snet.cn/pic/nuget.png" alt="Snet Logo"/>
 </p>
 
 <p align="center">
@@ -22,9 +22,9 @@
 </p>
 
 <p align="center">
-  <a href="https://shunnet.top"><b>🌐 官方网站</b></a> ·
+  <a href="https://snet.cn"><b>🌐 官方网站</b></a> ·
   <a href="https://github.com/shunnet/KMSim"><b>📦 GitHub</b></a> ·
-  <a href="https://Shunnet.top/72VRn"><b>🎬 演示视频</b></a>
+  <a href="https://Snet.cn/72VRn"><b>🎬 演示视频</b></a>
 </p>
 
 
@@ -76,7 +76,7 @@ PasteAsync
 DelayAsync = 1000
 EnterAsync
 DelayAsync = 1000
-CopyContentAsync = 欢迎使用 Shunnet.top 键鼠模拟器 
+CopyContentAsync = 欢迎使用 Snet.cn 键鼠模拟器 
 PasteAsync
 
 While = true
@@ -89,7 +89,7 @@ EnterAsync
 
 ## 🙏 致谢  
 
-- 🌐 [Shunnet.top](https://shunnet.top)  
+- 🌐 [Snet.cn](https://snet.cn)  
 - 🔥 [WpfMUI](https://github.com/shunnet/WpfMUI)  
 
 
@@ -104,4 +104,4 @@ EnterAsync
 
 ## 🌍 查阅  
 
-👉 [点击跳转](https://Shunnet.top/72VRn)  
+👉 [点击跳转](https://Snet.cn/72VRn)  
