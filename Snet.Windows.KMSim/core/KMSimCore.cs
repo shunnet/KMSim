@@ -1,11 +1,11 @@
-using Snet.Windows.KMSim.data;
+﻿using Snet.Windows.KMSim.data;
 using System.Text;
 using System.Windows.Input;
 
 namespace Snet.Windows.KMSim.core
 {
     /// <summary>
-    /// 键鼠模拟核心类，封装鼠标移动、点击、键盘输入、窗口管理等底层操作，均通过 <see cref="Win32"/> P/Invoke 实现。
+    /// 键鼠模拟核心类，封装鼠标移动、点击、键盘输入、窗口管理等底层操作，均通过 <see cref="Win32"/> P/Invoke 实现  
     /// <para>所有操作支持异步和取消令牌，适用于自动化脚本执行场景。</para>
     /// </summary>
     public class KMSimCore

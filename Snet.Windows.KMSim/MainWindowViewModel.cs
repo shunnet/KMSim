@@ -295,21 +295,21 @@ namespace Snet.Windows.KMSim
                 //显示默认数据
                 EditText = @"CopyContentAsync = 记事本
 LWinAsync
-DelayAsync = 1000
+DelayAsync = 3000
 PasteAsync
-DelayAsync = 1000
+DelayAsync = 3000
 EnterAsync
-DelayAsync = 1000
+DelayAsync = 3000
 CopyContentAsync = 欢迎使用 Snet.cn 键鼠模拟器 
 PasteAsync
-DelayAsync = 2000
+DelayAsync = 5000
 SelectAllAsync
 BackAsync
 
 While = true
 PasteAsync
 OemCommaAsync
-DelayAsync = 1000
+DelayAsync = 3000
 EnterAsync
 ";
             }

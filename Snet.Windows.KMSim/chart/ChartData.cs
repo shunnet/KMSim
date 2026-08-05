@@ -59,6 +59,11 @@ namespace Snet.Windows.KMSim.chart
             public bool LineRemove { get; set; }
 
             /// <summary>
+            /// 移除所有线条数据的右键菜单
+            /// </summary>
+            public bool DataRemove { get; set; }
+
+            /// <summary>
             /// 是否需要线条调整右键菜单
             /// </summary>
             public bool LineAdjust { get; set; }
@@ -66,7 +71,7 @@ namespace Snet.Windows.KMSim.chart
             /// <summary>
             /// 刷新时间
             /// </summary>
-            public int RefreshTime { get; set; } = 100;
+            public int RefreshTime { get; set; }
 
             /// <summary>
             /// Y轴的十字准线数据
@@ -151,9 +156,20 @@ namespace Snet.Windows.KMSim.chart
             public required DataLogger logger { get; set; }
 
             /// <summary>
-            /// 数据
+            /// 保留的最大数据点数<br/>
+            /// 超出后丢弃最旧数据，防止图表数据无限增长导致内存持续上升
             /// </summary>
-            private List<double> data = new List<double>();
+            private const int MaxDataCount = 5000;
+
+            /// <summary>
+            /// 数据（固定容量队列，只保留最近 MaxDataCount 个点）
+            /// </summary>
+            private readonly Queue<double> data = new(MaxDataCount);
+
+            /// <summary>
+            /// 自上次重建 DataLogger 以来新增的数据点数
+            /// </summary>
+            private int sinceRebuild;
 
             /// <summary>
             /// 更新数据
@@ -171,7 +187,31 @@ namespace Snet.Windows.KMSim.chart
                 }
 
                 logger.Add(v);
-                data.Add(v);
+                data.Enqueue(v);
+                sinceRebuild++;
+
+                if (data.Count > MaxDataCount)
+                {
+                    data.Dequeue();
+                    // 定期重建 DataLogger，避免其内部数据集合无限增长（重建成本约 MaxDataCount 次 Add，低频触发）
+                    if (sinceRebuild >= MaxDataCount)
+                    {
+                        sinceRebuild = 0;
+                        RebuildLogger();
+                    }
+                }
+            }
+
+            /// <summary>
+            /// 用保留的数据重建 DataLogger 内部数据
+            /// </summary>
+            private void RebuildLogger()
+            {
+                logger.Clear();
+                foreach (double value in data)
+                {
+                    logger.Add(value);
+                }
             }
 
             /// <summary>
@@ -180,6 +220,7 @@ namespace Snet.Windows.KMSim.chart
             public void Clear()
             {
                 data.Clear();
+                sinceRebuild = 0;
                 logger.Data.Clear();
                 logger.Clear();
             }
@@ -190,13 +231,13 @@ namespace Snet.Windows.KMSim.chart
             /// <returns></returns>
             public (double[] Ys, double[] Xs) Get()
             {
-                if (data != null && data.Count > 0)
+                if (data.Count > 0)
                 {
-                    int count = data.Count;
-                    double[] xs = new double[count];
-                    for (int i = 0; i < count; i++)
+                    double[] ys = data.ToArray();
+                    double[] xs = new double[ys.Length];
+                    for (int i = 0; i < ys.Length; i++)
                         xs[i] = i;
-                    return (data.ToArray(), xs);
+                    return (ys, xs);
                 }
                 return ([], []);
             }

@@ -9,7 +9,7 @@ using Snet.Core.extend;
 using Snet.Core.handler;
 using Snet.Model.data;
 using Snet.Model.@enum;
-using Snet.Windows.Controls.chart;
+using Snet.Windows.Core.data;
 using Snet.Windows.Core.@enum;
 using Snet.Windows.Core.handler;
 using System.Collections.Concurrent;
@@ -34,23 +34,21 @@ namespace Snet.Windows.KMSim.chart
     public class ChartOperate : CoreUnify<ChartOperate, ChartData.Basics>, IDisposable, IAsyncDisposable
     {
         /// <summary>
-        /// 无参构造函数<br/>
-        /// </summary>
-        public ChartOperate() : base() { }
-
-        /// <summary>
         /// 有参构造函数<br/>
         /// </summary>
         /// <param name="basics">基础数据</param>
-        public ChartOperate(ChartData.Basics basics) : base(basics) { }
+        public ChartOperate(ChartData.Basics basics) : base(basics)
+        {
+            SetTheme(SkinHandler.GetSkin(), basics.ChartControl);
+        }
 
         /// <summary>
         /// 皮肤切换事件处理器<br/>
         /// 当皮肤改变时调用 Style 切换 ScottPlot 样式<br/>
         /// </summary>
-        private void SkinHandler_OnSkinEvent(object? sender, Core.data.EventSkinResult e)
+        private void SkinHandler_OnSkinEvent(object? sender, EventSkinResult e)
         {
-            Style(e.Skin ??= SkinType.Dark, wpfPlot);
+            SetTheme(e.Skin ??= SkinType.Dark, wpfPlot);
         }
 
         #region 接口重写参数
@@ -147,6 +145,9 @@ namespace Snet.Windows.KMSim.chart
         /// </summary>
         private async Task AutoRefreshAsync(CancellationToken token, int millisecond)
         {
+            if (millisecond == 0)
+                return;
+
             // 防止并发调用同时启动多个循环
             if (AutoRefreshStatus)
                 return;
@@ -196,8 +197,8 @@ namespace Snet.Windows.KMSim.chart
                 case Snet.Model.@enum.LanguageType.zh:
                     wpfPlot.Plot.XLabel(basics.XTitle ?? string.Empty, 13);
                     wpfPlot.Plot.YLabel(basics.YTitle ?? string.Empty, 13);
-                    wpfPlot.Plot.Legend.FontName = ScottPlot.Fonts.Detect("微软雅黑");
-                    wpfPlot.Plot.Font.Set(ScottPlot.Fonts.Detect("微软雅黑"));
+                    wpfPlot.Plot.Legend.FontName = DetectCjkFont();
+                    wpfPlot.Plot.Font.Set(DetectCjkFont());
                     break;
                 case Snet.Model.@enum.LanguageType.en:
                     wpfPlot.Plot.XLabel(basics.XTitleEN ?? string.Empty, 13);
@@ -367,6 +368,27 @@ namespace Snet.Windows.KMSim.chart
         }
 
         /// <summary>
+        /// 判断线条是否存在
+        /// </summary>
+        public OperateResult DoesItExist(string sn)
+        {
+            BegOperate();
+            try
+            {
+                if (!GetStatus().GetDetails(out string? message))
+                {
+                    return EndOperate(false, message);
+                }
+                bool status = DataLoggerChartManage.ContainsKey(sn);
+                return EndOperate(status, status ? "存在" : "不存在");
+            }
+            catch (Exception ex)
+            {
+                return EndOperate(false, ex.Message, exception: ex);
+            }
+        }
+
+        /// <summary>
         /// 创建数据线（DataLogger）<br/>
         /// 优化点：
         /// 1. 使用 TryAdd + Count 属性避免并发问题；
@@ -464,6 +486,37 @@ namespace Snet.Windows.KMSim.chart
                     return EndOperate(false, message);
                 }
                 return EndOperate(false, $"{sn}{LanguageOperate.GetLanguageValue("不存在")}");
+            }
+            catch (Exception ex)
+            {
+                return EndOperate(false, ex.Message, exception: ex);
+            }
+        }
+
+        /// <summary>
+        /// 移除所有线条
+        /// </summary>
+        public OperateResult Remove()
+        {
+            BegOperate();
+            try
+            {
+                if (!GetStatus().GetDetails(out string? message))
+                {
+                    return EndOperate(false, message);
+                }
+
+                foreach (var item in DataLoggerChartManage)
+                {
+                    // 先清空数据
+                    if (Clear(item.Key).GetDetails(out message))
+                    {
+                        // 把此线条从控件中移除（UI 线程）
+                        item.Value.plot.Dispatcher.Invoke(() => item.Value.plot.Plot.Remove(item.Value.logger));
+                    }
+                }
+                DataLoggerChartManage.Clear();
+                return EndOperate(true);
             }
             catch (Exception ex)
             {
@@ -578,18 +631,10 @@ namespace Snet.Windows.KMSim.chart
         }
 
         /// <summary>
-        /// 将 WPF 的 Color 转换为 System.Drawing.Color（ScottPlot 使用）
-        /// </summary>
-        private System.Drawing.Color ToDrawingColor(System.Windows.Media.Color color)
-        {
-            return System.Drawing.Color.FromArgb(color.A, color.R, color.G, color.B);
-        }
-
-        /// <summary>
         /// 应用皮肤样式到 ScottPlot<br/>
         /// 优化点：延迟创建样式对象并复用，避免频繁 new 对象带来的开销。
         /// </summary>
-        public bool Style(SkinType skin, WpfPlot? plot = null)
+        public bool SetTheme(SkinType skin, WpfPlot? plot = null)
         {
             try
             {
@@ -618,6 +663,9 @@ namespace Snet.Windows.KMSim.chart
                         {
                             light = new ScottPlot.PlotStyles.Light()
                             {
+                                FigureBackgroundColor = new("#FEFEFE"),
+                                DataBackgroundColor = new("#FEFEFE"),
+                                LegendBackgroundColor = new("#FEFEFE"),
                                 //LegendBackgroundColor = new("#454545"),
                                 //LegendOutlineColor = new(ToDrawingColor(System.Windows.Media.Color.FromArgb(0, 255, 0, 0))),
                             };
@@ -659,8 +707,8 @@ namespace Snet.Windows.KMSim.chart
                     case Snet.Model.@enum.LanguageType.zh:
                         wpfPlot.Plot.XLabel(basics.XTitle ?? string.Empty, 13);
                         wpfPlot.Plot.YLabel(basics.YTitle ?? string.Empty, 13);
-                        wpfPlot.Plot.Legend.FontName = ScottPlot.Fonts.Detect("微软雅黑");
-                        wpfPlot.Plot.Font.Set(ScottPlot.Fonts.Detect("微软雅黑"));
+                        wpfPlot.Plot.Legend.FontName = DetectCjkFont();
+                        wpfPlot.Plot.Font.Set(DetectCjkFont());
                         break;
                     case Snet.Model.@enum.LanguageType.en:
                         wpfPlot.Plot.XLabel(basics.XTitleEN ?? string.Empty, 13);
@@ -689,6 +737,13 @@ namespace Snet.Windows.KMSim.chart
                     plot.Menu?.AddSeparator();
                     plot.Menu?.Add(LanguageOperate.GetLanguageValue("保存图片"), SaveImage);
                     plot.Menu?.Add(LanguageOperate.GetLanguageValue("复制图片"), CopyImage);
+
+                    if (basics.DataRemove)
+                    {
+                        plot.Menu?.AddSeparator();
+                        plot.Menu?.Add(App.LanguageOperate.GetLanguageValue("移除数据"), Clear);
+                    }
+
                     if (basics.LineRemove)
                     {
                         plot.Menu?.AddSeparator();
@@ -698,11 +753,6 @@ namespace Snet.Windows.KMSim.chart
                     {
                         plot.Menu?.AddSeparator();
                         plot.Menu?.Add(LanguageOperate.GetLanguageValue("线条操作"), LineOperate);
-                    }
-                    if (plot.ContextMenu != null)
-                    {
-                        plot.ContextMenu.Style =
-                            (Style)Application.Current.FindResource("UiContextMenu");
                     }
                     return true;
                 }
@@ -814,7 +864,27 @@ namespace Snet.Windows.KMSim.chart
         {
             if (plot == null)
                 return;
-            plot.Clear();
+            Remove();
+            Reset(plot);
+            // 重新应用当前皮肤样式，避免样式丢失
+            switch (CurrentSkinType)
+            {
+                case SkinType.Dark: wpfPlot?.Plot.SetStyle(dark); break;
+                case SkinType.Light: wpfPlot?.Plot.SetStyle(light); break;
+            }
+            plot.PlotControl?.Refresh();
+        }
+
+        /// <summary>
+        /// 移除所有线条并重置样式<br/>
+        /// </summary>
+        private void Clear(Plot plot)
+        {
+            if (plot == null)
+                return;
+
+            Clear();
+
             Reset(plot);
             // 重新应用当前皮肤样式，避免样式丢失
             switch (CurrentSkinType)
@@ -983,6 +1053,34 @@ namespace Snet.Windows.KMSim.chart
 
 
         #endregion
+
+        /// <summary>
+        /// 检测系统中支持 CJK（中日韩）字符渲染的字体。
+        /// 使用 SkiaSharp 基于字符的匹配，比字体名称匹配更可靠，
+        /// 避免 Debug/Publish 环境下字体名称不一致导致中文乱码。
+        /// </summary>
+        private static string DetectCjkFont()
+        {
+            // 方案1：使用 SkiaSharp 字符匹配 — 最可靠，不依赖字体名称
+            try
+            {
+                using var typeface = SKFontManager.Default.MatchCharacter('中');
+                if (typeface != null && !string.IsNullOrEmpty(typeface.FamilyName))
+                    return typeface.FamilyName;
+            }
+            catch { }
+
+            // 方案2：逐个尝试已知的 CJK 字体名称（英文名优先，跨环境最稳定）
+            string[] fallbackNames = ["Microsoft YaHei UI", "Microsoft YaHei", "SimHei", "Noto Sans SC", "微软雅黑"];
+            foreach (var name in fallbackNames)
+            {
+                string result = ScottPlot.Fonts.Detect(name);
+                if (!string.IsNullOrEmpty(result))
+                    return result;
+            }
+
+            return ScottPlot.Fonts.Default;
+        }
 
     }
 }

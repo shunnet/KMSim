@@ -1,6 +1,6 @@
 ﻿using System.Windows.Controls;
 
-namespace Snet.Windows.Controls.chart
+namespace Snet.Windows.KMSim.chart
 {
     /// <summary>
     /// ChartLine.xaml 的交互逻辑

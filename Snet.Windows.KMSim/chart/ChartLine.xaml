@@ -1,7 +1,7 @@
 ﻿<UserControl
-    x:Class="Snet.Windows.Controls.chart.ChartLine"
+    x:Class="Snet.Windows.KMSim.chart.ChartLine"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-    xmlns:local="clr-namespace:Snet.Windows.Controls.chart"
+    xmlns:local="clr-namespace:Snet.Windows.KMSim.chart"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" />
