@@ -1,4 +1,4 @@
-<h1 align="center">KMSim</h1>
+<h1 align="center">⌨️ Snet.KMSim</h1>
 
 <p align="center">
   <img width="120" height="120" src="https://api.snet.cn/pic/nuget.png" alt="Snet Logo"/>
@@ -9,16 +9,10 @@
 </p>
 
 <p align="center">
-
-  <img src="https://img.shields.io/badge/.NET-10.0-blue"/>
-  <img src="https://img.shields.io/badge/platform-Windows-success"/>
+  <img src="https://img.shields.io/badge/.NET-10.0-blue?logo=dotnet"/>
+  <img src="https://img.shields.io/badge/platform-Windows-success?logo=windows"/>
   <img src="https://img.shields.io/badge/license-MIT-green"/>
   <img src="https://img.shields.io/github/stars/shunnet/KMSim?style=social"/>
-
-</p>
-
-<p align="center">
-  高效、灵活的自动化控制解决方案，适用于测试、批量操作及脚本化控制。
 </p>
 
 <p align="center">
@@ -27,29 +21,54 @@
   <a href="https://Snet.cn/72VRn"><b>🎬 演示视频</b></a>
 </p>
 
+<p align="center">
+  📖 <a href="README.en.md"><b>English</b></a> | 简体中文
+</p>
 
-## 📌 项目简介
+## ✨ 项目简介
 
-KMSim 是一款 **Windows 下键鼠模拟器**，支持多种自动化操作场景。  
-无论是自动化测试、重复性操作，还是复杂脚本化控制，KMSim 都能帮你轻松实现。
-
+**KMSim** 是一款 **Windows 下可编程键鼠模拟器**，适用于自动化测试、重复性操作与复杂脚本化控制等场景。底层基于 Win32 API（`SetCursorPos` / `mouse_event` / `keybd_event`）实现，无驱动依赖。
 
 ## ⚙️ 核心功能
 
-- ⌨️ **键盘模拟**：  
-  支持单键、组合键、延迟输入等操作。
+| 功能 | 说明 |
+|------|------|
+| ⌨️ **键盘模拟** | 单键、组合键（Ctrl+...）、延迟输入等操作 |
+| 🖱️ **鼠标控制** | 移动、单击（左 / 中 / 右）、滚轮滚动 |
+| 📜 **脚本化控制** | 自定义脚本实现复杂自动化流程 |
+| 🎨 **高度可定制** | 丰富的配置选项，适应不同场景 |
+| 📋 **剪贴板操作** | 复制 / 粘贴 / 剪切内容，模拟 Ctrl 键快捷输入 |
 
-- 🖱️ **鼠标控制**：  
-  支持鼠标移动、点击、双击、滚轮滚动等操作。
+## 📜 脚本系统
 
-- 📜 **脚本化控制**：  
-  通过自定义脚本，实现复杂自动化流程。
+脚本采用 **`指令` 或 `指令 = 参数`** 语法，支持循环与嵌套调用：
 
-- 🎨 **高度可定制**：  
-  丰富配置选项，可根据不同场景自由调整。
+```text
+CopyContentAsync = 记事本
+LWinAsync
+DelayAsync = 3000
+PasteAsync
+DelayAsync = 3000
+EnterAsync
+DelayAsync = 3000
+SelectAllAsync
+DelayAsync = 5000
+BackAsync
+DelayAsync = 5000
+CopyContentAsync = 欢迎使用 Snet.cn 键鼠模拟器
+PasteAsync
 
+While = true
+PasteAsync
+OemCommaAsync
+DelayAsync = 3000
+EnterAsync
+```
 
-## 🚀 安装与使用
+> 💡 嵌套调用：使用 `‹ ›` 包裹含空格的整体参数 ——
+> `MoveWindowsHandleAsync = GetWindowsHandleAsync‹notepad aaa bbb› 0 0 1000 1000`
+
+## 📦 安装与使用
 
 ### 1️⃣ 克隆仓库
 
@@ -60,48 +79,42 @@ cd KMSim
 
 ### 2️⃣ 编译项目
 
-使用 **Visual Studio** 打开 `Snet.Windows.KMSim.slnx`，选择合适的构建配置（Debug 或 Release），然后构建项目。
+使用 **Visual Studio** 打开 `Snet.Windows.KMSim.slnx`，选择 Debug 或 Release 构建。
 
 ### 3️⃣ 运行程序
 
-构建完成后，在输出目录中找到 `Snet.Windows.KMSim.exe`，双击运行即可启动。
+构建完成后运行输出目录中的 `Snet.Windows.KMSim.exe`，在界面中编写并执行脚本。
 
-### 4️⃣ 测试脚本
+## 📚 资源与社区
 
-```bash
-CopyContentAsync = 记事本
-LWinAsync
-DelayAsync = 1000
-PasteAsync
-DelayAsync = 1000
-EnterAsync
-DelayAsync = 1000
-CopyContentAsync = 欢迎使用 Snet.cn 键鼠模拟器 
-PasteAsync
+| 渠道 | 链接 |
+|------|------|
+| 🎬 **演示视频** | [点击观看](https://Snet.cn/72VRn) |
+| 🌐 **官方网站** | [snet.cn](https://snet.cn) |
+| 🐛 **Issues** | [GitHub Issues](https://github.com/shunnet/KMSim/issues) — 反馈 Bug 或功能建议 |
+| ⭐ **Star** | 如果这个项目对你有帮助，请点亮 Star 支持我们 ❤️ |
 
-While = true
-PasteAsync
-OemCommaAsync
-DelayAsync = 1000
-EnterAsync
-```
+## 🙏 致谢
 
+- 🌐 [Snet.cn](https://snet.cn)
+- 🎨 [Snet.Windows.Controls](https://github.com/shunnet/WpfMUI) — WPF 控件库
 
-## 🙏 致谢  
+## 📜 License
 
-- 🌐 [Snet.cn](https://snet.cn)  
-- 🔥 [WpfMUI](https://github.com/shunnet/WpfMUI)  
+![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)
 
+本项目基于 **MIT** 开源协议 —— 自由使用、修改、分发。
 
-## 📜 许可证  
+📄 完整条款请阅读 [LICENSE](LICENSE) 文件。
 
-![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)  
+> ⚠️ 软件按「原样」提供，作者不对使用后果承担责任。
 
-本项目基于 **MIT** 开源。  
-请阅读 [LICENSE](LICENSE) 获取完整条款。  
-⚠️ 软件按 “原样” 提供，作者不对使用后果承担责任。  
+## 📈 Star History
 
-
-## 🌍 查阅  
-
-👉 [点击跳转](https://Snet.cn/72VRn)  
+<a href="https://www.star-history.com/?repos=shunnet%2FKMSim&type=date&legend=bottom-right">
+ <picture>
+   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/chart?repos=shunnet/KMSim&type=date&theme=dark&legend=bottom-right"/>
+   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/chart?repos=shunnet/KMSim&type=date&legend=bottom-right"/>
+   <img alt="Star History Chart" src="https://api.star-history.com/chart?repos=shunnet/KMSim&type=date&legend=bottom-right"/>
+ </picture>
+</a>
